@@ -26,12 +26,12 @@ from deap import tools
 from time import sleep, time
 
 SHOW_ERRORS = False
-FAST_EVAL = True
+FAST_EVAL = False
 
 class CellFitter(object):
     def __init__(self, cell_type, fitting_model_class):
         print("Starting FITTER for", fitting_model_class)
-        
+
         self.fitting_model_class = fitting_model_class
         self.cell_type = cell_type
 
@@ -322,7 +322,7 @@ class CellFitter(object):
         else:
             self.pop = [creator.Individual(i) for i in suggested_pop]
 
-        CXPB, MUTPB = 1, 1
+        CXPB, MUTPB = 1, 0.5
         F_DIVERSITY = 0.5
 
         # Evaluate the entire population - each in a separate process
