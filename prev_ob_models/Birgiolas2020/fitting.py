@@ -1,3 +1,5 @@
+from exceptions import Exception
+
 from olfactorybulb.database import *
 import os,sys
 from neuronunit.tests.olfactory_bulb.publications import *
