@@ -26,7 +26,7 @@ from deap import tools
 from time import sleep, time
 
 SHOW_ERRORS = True
-FAST_EVAL = True
+FAST_EVAL = False
 
 class CellFitter(object):
     def __init__(self, cell_type, fitting_model_class):
