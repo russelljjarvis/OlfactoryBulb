@@ -25,8 +25,8 @@ import random
 from deap import tools
 from time import sleep, time
 
-SHOW_ERRORS = True
-FAST_EVAL = False
+SHOW_ERRORS = False
+FAST_EVAL = True
 
 class CellFitter(object):
     def __init__(self, cell_type, fitting_model_class):
@@ -35,15 +35,9 @@ class CellFitter(object):
 
         self.load_measurements()
 
-    def fit(self, generation_size, number_of_generations):
-
-        if generation_size < 5:
-            raise Exception("Generation size must be 5 or more")
-
-        if number_of_generations <= 0:
-            raise Exception("Number of generations must be 1 or more")
-
-        self.pop = self.GA(self.top if hasattr(self, "top") else None, generation_size, number_of_generations)
+        # GA classes
+        creator.create("FitnessMin", base.Fitness, weights=(-1,))
+        creator.create("Individual", list, fitness=creator.FitnessMin)
 
     def pretty_pop(self):
         import pandas
@@ -195,7 +189,7 @@ class CellFitter(object):
                     z_score = (prediction - prop_test.observation["mean"]) / prop_test.observation["std"]
                     z_score = z_score.simplified
                 else:
-                    z_score = 6.0  # errors are treated as 6 std deviation
+                    z_score = 6.0*pq.dimensionless  # errors are treated as 6 std deviation
 
                 # Weigh each publication z-score by the pub sample size
                 z_weighed = z_score * prop_test.observation["n"]
@@ -230,6 +224,23 @@ class CellFitter(object):
                         else:
                             setattr(sec, attr, pv)
 
+    def get_best_score(self):
+
+        score = self.get_workitem_score({
+            "model_class": self.fitting_model_class,
+            "param_values": self.best
+        })
+
+        df = []
+        model = score
+        row = {"model": model["model_class"]}
+        for t, test in enumerate(model["properties"].keys()):
+            row[test] = model["properties"][test]["z_score_combined"]
+        df.append(row)
+
+        df = DataFrame(df, [model["model_class"]])
+        return df, score
+
     def random_parameters(self):
         # Initial param values are uniformly distributed between the low-high bounds
         result = [random.random()] * len(self.params)
@@ -239,20 +250,22 @@ class CellFitter(object):
 
         return creator.Individual(result)
 
-    def get_fitnesses(self, pop):
-        max_wait = 4 * 60 # seconds
+    def get_fitnesses(self, pop, label):
+        print("GA STARTING", label)
+
+        max_wait = round(2.5 * 60) # seconds
         processes = max(1, multiprocessing.cpu_count() - 1)
 
         from multiprocess import Pool, TimeoutError
 
-        pool = Pool(processes=processes)  # , maxtasksperchild=1)
-        processes = [pool.apply_async(self.evaluate, (ind,)) for ind in pop]
+        pool = Pool(processes=processes, maxtasksperchild=1)
+        processes = [pool.apply_async(self.evaluate, (list(ind),)) for ind in pop]
 
         wait_until = time() + max_wait
 
         fitnesses = []
 
-        for process in processes:
+        for pi, process in enumerate(processes):
             timeout = max(0, wait_until - time())
 
             try:
@@ -272,17 +285,26 @@ class CellFitter(object):
 
             fitnesses.append(result)
 
+            print("DONE with", pi+1, "of", len(processes), "of", label)
+
         pool.terminate()
 
         return fitnesses
 
 
+    def fit(self, generation_size, number_of_generations):
+
+        if generation_size < 5:
+            raise Exception("Generation size must be 5 or more")
+
+        if number_of_generations < 0:
+            raise Exception("Number of generations must be 0 or more")
+
+        self.pop = self.GA(self.top if hasattr(self, "top") else None, generation_size, number_of_generations)
+
     def GA(self, suggested_pop=None, n=30, NGEN=30):
         lows = [p["low"] for p in self.params]
         highs = [p["high"] for p in self.params]
-
-        creator.create("FitnessMin", base.Fitness, weights=(-1,))
-        creator.create("Individual", list, fitness=creator.FitnessMin)
 
         toolbox = base.Toolbox()
         toolbox.register("individual", self.random_parameters)
@@ -294,25 +316,25 @@ class CellFitter(object):
         toolbox.register("select", tools.selNSGA2, k=int(n * 0.2))
 
         if suggested_pop is None:
-            pop = toolbox.population(n=n)
+            self.pop = toolbox.population(n=n)
         else:
-            pop = [creator.Individual(i) for i in suggested_pop]
+            self.pop = [creator.Individual(i) for i in suggested_pop]
 
         CXPB, MUTPB = 1, 1
         F_DIVERSITY = 0.5
 
         # Evaluate the entire population - each in a separate process
-        fitnesses = self.get_fitnesses(pop)
+        fitnesses = self.get_fitnesses(self.pop, label="Generation ZERO")
 
-        for ind, fit in zip(pop, fitnesses):
+        for ind, fit in zip(self.pop, fitnesses):
             ind.fitness.values = fit
 
         for g in range(NGEN):
             # Select the parents
-            elite = toolbox.select(pop)
+            elite = toolbox.select(self.pop)
 
             random_offspring = toolbox.population(n=int(n * F_DIVERSITY / 2.0))
-            diversity_offspring = random_offspring + tools.selRandom(pop, int(n * F_DIVERSITY / 2.0))
+            diversity_offspring = random_offspring + tools.selRandom(self.pop, int(n * F_DIVERSITY / 2.0))
             elite_offspring = tools.selRandom(elite, n - len(elite) - len(diversity_offspring))
 
             offspring = random_offspring + diversity_offspring + elite_offspring
@@ -335,20 +357,22 @@ class CellFitter(object):
             # Evaluate the individuals without fitness value - again in separate processes
             offspring_nofitness = [ind for ind in offspring if not ind.fitness.valid]
 
-            fitnesses = self.get_fitnesses(offspring_nofitness)
+            fitnesses = self.get_fitnesses(offspring_nofitness, label=str(g+1))
 
             for ind, fit in zip(offspring_nofitness, fitnesses):
                 ind.fitness.values = fit
 
             # The population is entirely replaced by the parents + offspring
-            pop[:] = elite + offspring
+            self.pop[:] = elite + offspring
 
-            best = toolbox.select(pop)[0]
+            self.top = toolbox.select(self.pop)
+            self.best = self.top[0]
             print("Generation", g+1, "out of", NGEN, "COMPLETE")
-            print('Best fitness:', best.fitness.values[0])
-            print('Best individual', best)
+            print('Best fitness:', self.best.fitness.values[0])
+            print('Best individual', self.best)
 
-        return pop
+
+        return self.pop
 
     def clear_cache(self):
         cache.clear()
@@ -384,58 +408,7 @@ class FitterMC(CellFitter):
             { "start": 0.000107, "attr": "gbar_CaT",  "low": 0,     "high": 18e-3,   "lists": ["apical"] },
         ]
 
-        self.top = [[1.0, 34.40577448714667,
-                      1.7746337170486868,
-                      48.600061083126825,
-                      -73.37824874831657,
-                      -52.149512474246556,
-                      2.8689454891603497e-05,
-                      7.600064936952291,
-                      6.513661312706145,
-                      0.01835806177392501,
-                      0.012685911771409467,
-                      0.001009786028927451,
-                      0.003485358049971202,
-                      0.0009111182551995163,
-                      0.0006405838020076363,
-                      -36.191181538089175,
-                      2.6308088272967942e-06,
-                      0.009520566435955282],
-                     [1.0, 54.371057327671025,
-                      1.343586187918468,
-                      44.40845548134062,
-                      -81.17397852577881,
-                      -52.149512474246556,
-                      2.8689454891603497e-05,
-                      7.600064936952291,
-                      12.492102024675049,
-                      0.01835806177392501,
-                      0.012243090987314832,
-                      0.001009786028927451,
-                      0.0025920677224618473,
-                      0.0006458839218994715,
-                      0.0006437525063628547,
-                      -36.474771746065244,
-                      1.480641964136122e-06,
-                      0.009384267411892713],
-                     [1.0,
-                      54.371057327671025,
-                      1.343586187918468,
-                      44.40845548134062,
-                      -81.17397852577881,
-                      -52.149512474246556,
-                      2.8689454891603497e-05,
-                      7.600064936952291,
-                      12.492102024675049,
-                      0.01835806177392501,
-                      0.012243090987314832,
-                      0.001009786028927451,
-                      0.0025920677224618473,
-                      0.0006458839218994715,
-                      0.0006437525063628547,
-                      -36.474771746065244,
-                      1.480641964136122e-06,
-                      0.009384267411892713]]
+        self.top = None
 
 
 
