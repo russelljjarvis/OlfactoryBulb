@@ -30,6 +30,8 @@ FAST_EVAL = True
 
 class CellFitter(object):
     def __init__(self, cell_type, fitting_model_class):
+        print("Starting FITTER for", fitting_model_class)
+        
         self.fitting_model_class = fitting_model_class
         self.cell_type = cell_type
 
