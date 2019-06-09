@@ -253,8 +253,6 @@ class CellFitter(object):
         return creator.Individual(result)
 
     def get_fitnesses(self, pop, label):
-        print("GA STARTING", label)
-
         max_wait = round(2.5 * 60) # seconds
         processes = max(1, multiprocessing.cpu_count() - 1)
 
@@ -266,6 +264,8 @@ class CellFitter(object):
         wait_until = time() + max_wait
 
         fitnesses = []
+
+        print("STARTED GEN", label)
 
         for pi, process in enumerate(processes):
             timeout = max(0, wait_until - time())
