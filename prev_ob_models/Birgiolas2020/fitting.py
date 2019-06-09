@@ -287,7 +287,7 @@ class CellFitter(object):
 
             fitnesses.append(result)
 
-            print("DONE with", pi+1, "of", len(processes), "of", label)
+            print("DONE with", pi+1, "of", len(processes), "of GEN", label, "with Fitness","%.2f" % result[0])
 
         pool.terminate()
 
@@ -326,7 +326,7 @@ class CellFitter(object):
         F_DIVERSITY = 0.5
 
         # Evaluate the entire population - each in a separate process
-        fitnesses = self.get_fitnesses(self.pop, label="Generation ZERO")
+        fitnesses = self.get_fitnesses(self.pop, label="ZERO")
 
         for ind, fit in zip(self.pop, fitnesses):
             ind.fitness.values = fit
