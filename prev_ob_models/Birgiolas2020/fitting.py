@@ -68,7 +68,7 @@ class CellFitter(object):
             pub = str(m.source.publication_class).strip()
             class_name = test_generic + pub
 
-            if FAST_EVAL and test_generic != "RestingVoltageTest":
+            if FAST_EVAL and test_generic != "AfterHyperpolarizationTimeTest":
                 continue
 
             if test_generic not in self.properties:
@@ -265,7 +265,7 @@ class CellFitter(object):
 
         fitnesses = []
 
-        print("STARTED GEN", label)
+        print("STARTED GEN", label, "size", len(pop))
 
         for pi, process in enumerate(processes):
             timeout = max(0, wait_until - time())
@@ -322,8 +322,12 @@ class CellFitter(object):
         else:
             self.pop = [creator.Individual(i) for i in suggested_pop]
 
-        CXPB, MUTPB = 1, 1
+        MUTPB = 0.9
         F_DIVERSITY = 0.5
+
+        n_elite_offspring = int(round(n * (1-F_DIVERSITY)))
+        n_diversity_offspring = int(round(n * F_DIVERSITY / 2.0))
+        n_random = n_diversity_offspring
 
         # Evaluate the entire population - each in a separate process
         fitnesses = self.get_fitnesses(self.pop, label="ZERO")
@@ -332,24 +336,35 @@ class CellFitter(object):
             ind.fitness.values = fit
 
         for g in range(NGEN):
-            # Select the parents
-            elite = toolbox.select(self.pop)
+            # Select the elite parents - they already have fitness from prev-gen
+            parents = toolbox.select(self.pop)
 
-            random_offspring = toolbox.population(n=int(n * F_DIVERSITY / 2.0))
-            diversity_offspring = random_offspring + tools.selRandom(self.pop, int(n * F_DIVERSITY / 2.0))
-            elite_offspring = tools.selRandom(elite, n - len(elite) - len(diversity_offspring))
+            # Elite children come from elite parents
+            elite_offspring = tools.selRandom(parents, n_elite_offspring)
+
+            # Diversity children have random parents
+            diversity_offspring = tools.selRandom(self.pop, n_diversity_offspring)
+
+            # Random offspring are randomly generated individuals
+            random_offspring = toolbox.population(n=n_random)
 
             offspring = random_offspring + diversity_offspring + elite_offspring
+
+            print('GEN',g+1,
+                  "Parents",len(parents),
+                  "Elite", len(elite_offspring),
+                  "DIV",len(diversity_offspring),
+                  "RND", len(random_offspring),
+                  "TOT NEW", len(offspring))
 
             # Clone the selected individuals
             offspring = map(toolbox.clone, offspring)
 
             # Apply crossover and mutation on the offspring
             for child1, child2 in zip(offspring[::2], offspring[1::2]):
-                if random.random() < CXPB:
-                    toolbox.mate(child1, child2)
-                    del child1.fitness.values
-                    del child2.fitness.values
+                toolbox.mate(child1, child2)
+                del child1.fitness.values
+                del child2.fitness.values
 
             for child in offspring:
                 if random.random() < MUTPB:
@@ -365,7 +380,7 @@ class CellFitter(object):
                 ind.fitness.values = fit
 
             # The population is entirely replaced by the parents + offspring
-            self.pop[:] = elite + offspring
+            self.pop[:] = parents + offspring
 
             self.top = toolbox.select(self.pop)
             self.best = self.top[0]
@@ -388,26 +403,26 @@ class FitterMC(CellFitter):
         )
 
         self.params = [
-            { "start": 1.0,       "attr": "diam",      "low": 0.1,   "high": 2.0,     "lists": ["apical","basal","axonal"] },
-            { "start": 34.77,     "attr": "Ra",        "low": 5.0,   "high": 100.0,   "lists": ["all"] },
-            { "start": 2.706,     "attr": "cm",        "low": 0.1,   "high": 4.0,     "lists": ["all"] },
-            { "start": 49.95,     "attr": "ena",       "low": 40.0,  "high": 50.0,    "lists": ["all"] },
-            { "start": -70.03,    "attr": "ek",        "low": -100.0,"high": -70.0,   "lists": ["all"] },
-            { "start": -64.42,    "attr": "e_pas",     "low": -70.0, "high": -50.0,   "lists": ["all"] },
-            { "start": 0.0005955, "attr": "g_pas",     "low": 0,     "high": 0.00003, "lists": ["all"] },
-            { "start": 0.5955,    "attr": "sh_Na",     "low": 0,     "high": 10,      "lists": ["all"] },
-            { "start": 10,        "attr": "tau_CaPool","low": 1,     "high": 20,     "lists": ["all"] },
+            { "start": 1,  "attr": "diam",        "low": 0.1, "high": 10.0, "lists": ["apical","basal","axonal"] },
+            { "start": 34.77,  "attr": "Ra",        "low": 5.0, "high": 100.0, "lists": ["all"] },
+            { "start": 2.706,   "attr": "cm",        "low": 0.1, "high": 4.0, "lists": ["all"] },
+            { "start": 49.95,  "attr": "ena",       "low": 40.0, "high": 50.0, "lists": ["all"] },
+            { "start": -70.03,  "attr": "ek",        "low": -100.0, "high": -70.0, "lists": ["all"] },
+            { "start": -64.42,  "attr": "e_pas",     "low": -70.0, "high": -50.0, "lists": ["all"] },
+            { "start": 0.0005955, "attr": "g_pas",     "low": 0, "high": 0.00004, "lists": ["all"] },
+            { "start": 0.5955,  "attr": "sh_Na",     "low": 0, "high": 10, "lists": ["all"] },
+            { "start": 10,  "attr": "tau_CaPool",     "low": 1, "high": 20, "lists": ["all"] },
 
-            { "start":  0.87485,  "attr": "gbar_Na",     "low": 0, "high": 0.05,  "lists": ["all"] },
-            { "start": 0.0297,    "attr": "gbar_Kd",     "low": 0, "high": 0.04,  "lists": ["all"] },
-            { "start": 0.000264,  "attr": "gbar_Kslow",  "low": 0, "high": 0.004, "lists": ["all"] },
-            { "start": 0.07215,   "attr": "gbar_KA",     "low": 0, "high": 0.005, "lists": ["all"] },
-            { "start": 0.001,     "attr": "gbar_KCa",    "low": 0, "high": 0.004, "lists": ["all"] },
-            { "start": 0.00081441,"attr": "gbar_LCa",    "low": 0, "high": 0.001, "lists": ["all"] },
+            { "start":  0.87485,  "attr": "gbar_Na",     "low": 0, "high": 0.05, "lists": ["all"] },
+            { "start": 0.0297,  "attr": "gbar_Kd",     "low": 0, "high": 0.05, "lists": ["all"] },
+            { "start": 0.000264,  "attr": "gbar_Kslow",  "low": 0, "high": 0.008, "lists": ["all"] },
+            { "start": 0.07215,  "attr": "gbar_KA",     "low": 0, "high": 0.005, "lists": ["all"] },
+            { "start": 0.001,  "attr": "gbar_KCa",    "low": 0, "high": 0.004, "lists": ["all"] },
+            { "start": 0.00081441,  "attr": "gbar_LCa",  "low": 0, "high": 0.001, "lists": ["all"] },
 
-            { "start": -30.805,  "attr": "eh",        "low": -40.0, "high": -25.0,   "lists": ["apical"] },
-            { "start": 0.00335,  "attr": "gbar_Ih",   "low": 0,     "high": 0.000006, "lists": ["apical"] },
-            { "start": 0.000107, "attr": "gbar_CaT",  "low": 0,     "high": 18e-3,   "lists": ["apical"] },
+            { "start": -30.805,  "attr": "eh",       "low": -40.0, "high": -25.0, "lists": ["apical"] },
+            { "start": 0.00335,  "attr": "gbar_Ih",    "low": 0, "high": 0.000003, "lists": ["apical"] },
+            { "start": 0.000107,  "attr": "gbar_CaT",    "low": 0, "high": 18e-3, "lists": ["apical"] },
         ]
 
         self.top = [
@@ -438,8 +453,9 @@ class FitterMC(CellFitter):
             [1.6326325740341017, 34.177396997364056, 0.794699716025574, 41.78273762900968, -78.93519835072384,
              -50.08361215379143, 1.8396477462947385e-05, 4.848903066311322, 3.00304851331697, 0.0098190845816793,
              0.019793837590846183, 0.0016599394725783164, 0.002257500120349872, 0.0020460839439385443,
-             0.0009409229621420443, -38.26700986258791, 1.161083055427734e-06, 0.017756177795447206]
+             0.0009409229621420443, -38.26700986258791, 1.161083055427734e-06, 0.017756177795447206],
 
+            [1.693158884062039, 90.46040724869633, 1.0480872753459018, 49.875049876615, -73.8389182070454, -66.49188361960778, 2.963571204761428e-05, 1.562956194462862, 7.110071949488179, 0.016535728029992765, 0.0218850395961089, 0.0029908257464033687, 0.004797987759078103, 0.0010793464959502025, 0.0007131716751141841, -39.197218085620186, 1.757858062583784e-06, 0.017898783826228726],
         ]
 
 
