@@ -43,3 +43,18 @@ class IsolatedCell(object):
                                    if name_contains in self.pwm.name(i))
 
         self.pwm.close(target_window_index)
+
+    def set_model_params(self, param_values):
+        from neuron import h
+        for pi, pv in enumerate(param_values):
+            attr = self.params[pi]["attr"]
+            if attr == "tau_CaPool":
+                setattr(h, attr, pv)
+            else:
+                for param_list in self.params[pi]["lists"]:
+                    for sec in getattr(self.cell, param_list):
+                        if attr == "diam":
+                            for i3d in range(int(h.n3d(sec=sec))):
+                                h.pt3dchange(i3d, h.diam3d(i3d, sec=sec) * pv, sec=sec)
+                        else:
+                            setattr(sec, attr, pv)

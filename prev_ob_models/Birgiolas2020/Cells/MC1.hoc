@@ -1008,42 +1008,19 @@ proc geom_nseg() {
   forsec all { nseg = int((L/(0.1*lambda_f(100))+.999)/2)*2 + 1  }
 }
 proc biophys() {
-  forsec all {
-    Ra = 35.4
-    cm = 1
-
+  forsec all    {
     insert pas
-      g_pas = 0.001
-      e_pas = -70
-
     insert CaPool
-
     insert Na
-      sh_Na = 5
-      gbar_Na = 0.01
-
     insert Kd
-      gbar_Kd = 0.002
-
     insert LCa
-      gbar_LCa = 0.12
-
     insert Kslow
-      gbar_Kslow = 0
-
     insert KA
-      gbar_KA = 0.0002
-
     insert KCa
-      gbar_KCa = 0.120
   }
-
   forsec apical {
     insert CaT
-      gbar_CaT = 0.036
-
     insert Ih
-      gbar_Ih = 0
   }
 }
 proc biophys_inhomo(){}

@@ -30,6 +30,7 @@ FAST_EVAL = False
 
 class CellFitter(object):
     def __init__(self, cell_type, fitting_model_class):
+
         print("Starting FITTER for", fitting_model_class)
 
         self.fitting_model_class = fitting_model_class
@@ -40,6 +41,21 @@ class CellFitter(object):
         # GA classes
         creator.create("FitnessMin", base.Fitness, weights=(-1,))
         creator.create("Individual", list, fitness=creator.FitnessMin)
+
+    def load_model_params(self):
+        model_cls = self.import_model_class(self.fitting_model_class)
+        self.params = model_cls.params
+
+    def import_model_class(self, model_class):
+        # This line takes input like: 'prev_ob_models.BhallaBower1993.isolated_cells.MC' and converts it to:
+        #                         from prev_ob_models.BhallaBower1993.isolated_cells import MC
+        exec ('from ' + '.'.join(model_class.split('.')[0:-1]) + " import " + model_class.split('.')[-1])
+
+        # Import the root module
+        exec ("import " + model_class.split('.')[0])
+
+        # Return the name of the model class
+        return eval(model_class.split('.')[-1])
 
     def pretty_pop(self):
         import pandas
@@ -137,19 +153,14 @@ class CellFitter(object):
 
         model_class = str(item["model_class"])
 
-        # This line takes input like: 'prev_ob_models.BhallaBower1993.isolated_cells.MC' and converts it to:
-        #                         from prev_ob_models.BhallaBower1993.isolated_cells import MC
-        exec('from ' + '.'.join(model_class.split('.')[0:-1]) + " import " + model_class.split('.')[-1])
-
-        # Import the root module
-        exec("import " + model_class.split('.')[0])
+        model_cls = self.import_model_class(model_class)
 
         # Instantiate the model class
-        exec ('cell = ' + model_class + '()')
+        cell = model_cls()
 
         if "param_values" in item:
             param_values = item["param_values"]
-            self.set_model_params(param_values, cell.cell)
+            cell.set_model_params(param_values)
         else:
             param_values = []
 
@@ -210,21 +221,6 @@ class CellFitter(object):
         results["model_score"] = math.sqrt(results["model_score"])
 
         return results
-
-    def set_model_params(self, param_values, hoc_cell):
-        from neuron import h
-        for pi, pv in enumerate(param_values):
-            attr = self.params[pi]["attr"]
-            if attr == "tau_CaPool":
-                setattr(h, attr, pv)
-            else:
-                for param_list in self.params[pi]["lists"]:
-                    for sec in getattr(hoc_cell, param_list):
-                        if attr == "diam":
-                            for i3d in range(int(h.n3d(sec=sec))):
-                                h.pt3dchange(i3d, h.diam3d(i3d, sec=sec) * pv, sec=sec)
-                        else:
-                            setattr(sec, attr, pv)
 
     def get_best_score(self):
 
@@ -394,6 +390,33 @@ class CellFitter(object):
     def clear_cache(self):
         cache.clear()
 
+    def print_params(self, param_values, hoc_cell):
+        result = ""
+        indent = "  "
+
+        lists = []
+        for pv in self.params:
+            lists = lists + pv["lists"]
+        lists = np.unique(lists)
+
+        for lst in lists:
+            result += indent + "forsec " + lst + " {" + "\n"
+            for pi, pv in enumerate(self.params):
+                attr = pv["attr"]
+                value = str(param_values[pi])
+
+                if lst in pv["lists"]:
+                    if attr == "diam":
+                        result += indent + indent + "for i=0, n3d()-1 pt3dchange(i, diam3d(i)*" + value + ")" + "\n"
+                    else:
+                        result += indent + indent + attr + " = " + value + "\n"
+
+            result += indent + "}" + "\n"
+
+        print(result)
+
+        return result
+
 class FitterMC(CellFitter):
     def __init__(self, fitting_model_class = "prev_ob_models.Birgiolas2020.isolated_cells.MC"):
 
@@ -401,29 +424,6 @@ class FitterMC(CellFitter):
             cell_type="mc",
             fitting_model_class=fitting_model_class
         )
-
-        self.params = [
-            { "start": 1,  "attr": "diam",        "low": 0.1, "high": 10.0, "lists": ["apical","basal","axonal"] },
-            { "start": 34.77,  "attr": "Ra",        "low": 5.0, "high": 100.0, "lists": ["all"] },
-            { "start": 2.706,   "attr": "cm",        "low": 0.1, "high": 4.0, "lists": ["all"] },
-            { "start": 49.95,  "attr": "ena",       "low": 40.0, "high": 50.0, "lists": ["all"] },
-            { "start": -70.03,  "attr": "ek",        "low": -100.0, "high": -70.0, "lists": ["all"] },
-            { "start": -64.42,  "attr": "e_pas",     "low": -70.0, "high": -50.0, "lists": ["all"] },
-            { "start": 0.0005955, "attr": "g_pas",     "low": 0, "high": 0.00004, "lists": ["all"] },
-            { "start": 0.5955,  "attr": "sh_Na",     "low": 0, "high": 10, "lists": ["all"] },
-            { "start": 10,  "attr": "tau_CaPool",     "low": 1, "high": 20, "lists": ["all"] },
-
-            { "start":  0.87485,  "attr": "gbar_Na",     "low": 0, "high": 0.05, "lists": ["all"] },
-            { "start": 0.0297,  "attr": "gbar_Kd",     "low": 0, "high": 0.05, "lists": ["all"] },
-            { "start": 0.000264,  "attr": "gbar_Kslow",  "low": 0, "high": 0.008, "lists": ["all"] },
-            { "start": 0.07215,  "attr": "gbar_KA",     "low": 0, "high": 0.005, "lists": ["all"] },
-            { "start": 0.001,  "attr": "gbar_KCa",    "low": 0, "high": 0.004, "lists": ["all"] },
-            { "start": 0.00081441,  "attr": "gbar_LCa",  "low": 0, "high": 0.001, "lists": ["all"] },
-
-            { "start": -30.805,  "attr": "eh",       "low": -40.0, "high": -25.0, "lists": ["apical"] },
-            { "start": 0.00335,  "attr": "gbar_Ih",    "low": 0, "high": 0.000003, "lists": ["apical"] },
-            { "start": 0.000107,  "attr": "gbar_CaT",    "low": 0, "high": 18e-3, "lists": ["apical"] },
-        ]
 
         self.top = [
             [1.825548648056325,
