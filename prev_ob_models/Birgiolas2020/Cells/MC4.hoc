@@ -58,9 +58,9 @@ proc topol() { local i
 }
 proc shape3d_1() {
   soma {pt3dclear()
-	pt3dadd(-9.4838, 0, 0, 18.9676)
-	pt3dadd(0, 0, 0, 18.9676)
-	pt3dadd(9.4838, 0, 0, 18.9676)
+	pt3dadd(-5.262, 0, 0, 10.524)
+	pt3dadd(0, 0, 0, 10.524)
+	pt3dadd(5.262, 0, 0, 10.524)
   }
   dend {pt3dclear()
 	pt3dstyle(1, 0, 0, 0)
