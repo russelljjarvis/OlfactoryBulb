@@ -25,13 +25,13 @@ import random
 from deap import tools
 from time import sleep, time
 
-SHOW_ERRORS = True
+SHOW_ERRORS = False
 FAST_EVAL = False
 
 class CellFitter(object):
-    def __init__(self, cell_type, fitting_model_class):
+    def __init__(self, cell_type, fitting_model_class=None):
 
-        print("Starting FITTER for", fitting_model_class)
+        print("Starting "+ cell_type +" FITTER for model:", fitting_model_class)
 
         self.fitting_model_class = fitting_model_class
         self.cell_type = cell_type
@@ -112,14 +112,14 @@ class CellFitter(object):
                              .where(CellModel.cell_type == self.cell_type.upper())
                              )
 
-        # Make the model classes loadable with 'module.module.ModelClass()'
-        for i, m in enumerate(model_classes):
-            nmsp = string.join(m.isolated_model_class.split('.')[:-1], '.')
-            cls = m.isolated_model_class.split('.')[-1]
-
-            import_cmd = 'from ' + nmsp + ' import ' + cls + ' as Model' + str(i)
-            print(import_cmd)
-            exec (import_cmd)
+        # # Make the model classes loadable with 'module.module.ModelClass()'
+        # for i, m in enumerate(self.model_classes):
+        #     nmsp = string.join(m.isolated_model_class.split('.')[:-1], '.')
+        #     cls = m.isolated_model_class.split('.')[-1]
+        #
+        #     import_cmd = 'from ' + nmsp + ' import ' + cls + ' as Model' + str(i)
+        #     print(import_cmd)
+        #     exec (import_cmd)
 
         # Create work item list
         self.work_items = []
@@ -158,7 +158,7 @@ class CellFitter(object):
         # Instantiate the model class
         cell = model_cls()
 
-        if "param_values" in item:
+        if "param_values" in item and item["param_values"] is not None and len(item["param_values"]) > 0:
             param_values = item["param_values"]
             cell.set_model_params(param_values)
         else:
@@ -187,6 +187,9 @@ class CellFitter(object):
 
                 try:
                     prediction = prop_test.generate_prediction(model)
+
+                    if type(prediction) == str:
+                        raise Exception(prediction)
 
                 except:
                     import traceback
@@ -238,6 +241,34 @@ class CellFitter(object):
 
         df = DataFrame(df, [model["model_class"]])
         return df, score
+
+    def get_workitem_scores(self):
+
+        processes = max(1, multiprocessing.cpu_count() - 1)
+
+        from multiprocess import Pool
+        pool = Pool(processes=processes, maxtasksperchild=1)
+        scores = pool.map(self.get_workitem_score, self.work_items)
+        pool.close()
+        pool.terminate()
+
+        df = []
+        for score in scores:
+            model = score
+            row = {"model": score["model_class"]}
+            for t, test in enumerate(score["properties"].keys()):
+                row[test] = score["properties"][test]["z_score_combined"]
+            df.append(row)
+
+        df = DataFrame(df, [score["model_class"] for score in scores])
+        return df
+
+    def get_previous_model_scores(self):
+
+        self.load_previous_models_as_workitems()
+        df = self.get_workitem_scores()
+
+        return df
 
     def random_parameters(self):
         # Initial param values are uniformly distributed between the low-high bounds
@@ -416,47 +447,6 @@ class CellFitter(object):
         print(result)
 
         return result
-
-class FitterMC(CellFitter):
-    def __init__(self, fitting_model_class = "prev_ob_models.Birgiolas2020.isolated_cells.MC"):
-
-        super(FitterMC, self).__init__(
-            cell_type="mc",
-            fitting_model_class=fitting_model_class
-        )
-
-        self.top = [
-            [1.825548648056325,
-             54.13085715757424,
-             1.450513328526805,
-             43.46285468853027,
-             -79.11578796172239,
-             -51.23433621786335,
-             2.9304959431139075e-05,
-             2.7877089993733044,
-             7.579423908207511,
-             0.017314273442651348,
-             0.013851418754121077,
-             0.003492982004433873,
-             0.0027512416572638607,
-             0.0028399162014080535,
-             0.0005158999034465254,
-             -34.80571796720459,
-             2.0777128131181613e-06,
-             0.013341839235068506],
-
-            [1.705342506779839, 57.09925288588258, 1.0480872753459018, 46.92740617824292, -72.62711581494455,
-             -63.366346152577506, 2.9914568225261235e-05, 1.562956194462862, 14.20637343187267, 0.01214827511477937,
-             0.0218850395961089, 0.0027193856629376834, 0.0035351916435461123, 0.0034455698227170047,
-             0.00022010267881156947, -32.888237647601514, 2.4331763915413932e-06, 0.01217015480225392],
-
-            [1.6326325740341017, 34.177396997364056, 0.794699716025574, 41.78273762900968, -78.93519835072384,
-             -50.08361215379143, 1.8396477462947385e-05, 4.848903066311322, 3.00304851331697, 0.0098190845816793,
-             0.019793837590846183, 0.0016599394725783164, 0.002257500120349872, 0.0020460839439385443,
-             0.0009409229621420443, -38.26700986258791, 1.161083055427734e-06, 0.017756177795447206],
-
-            [1.693158884062039, 90.46040724869633, 1.0480872753459018, 49.875049876615, -73.8389182070454, -66.49188361960778, 2.963571204761428e-05, 1.562956194462862, 7.110071949488179, 0.016535728029992765, 0.0218850395961089, 0.0029908257464033687, 0.004797987759078103, 0.0010793464959502025, 0.0007131716751141841, -39.197218085620186, 1.757858062583784e-06, 0.017898783826228726],
-        ]
 
 
 
