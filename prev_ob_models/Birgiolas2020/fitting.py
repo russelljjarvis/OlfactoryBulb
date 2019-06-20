@@ -38,6 +38,9 @@ class CellFitter(object):
 
         self.load_measurements()
 
+        if fitting_model_class is not None:
+            self.load_model_params()
+
         # GA classes
         creator.create("FitnessMin", base.Fitness, weights=(-1,))
         creator.create("Individual", list, fitness=creator.FitnessMin)
@@ -272,12 +275,19 @@ class CellFitter(object):
 
     def random_parameters(self):
         # Initial param values are uniformly distributed between the low-high bounds
-        result = [random.random()] * len(self.params)
+        result = [random.random() for i in range(len(self.params))]
 
         for i, pv in enumerate(result):
             result[i] = (self.params[i]["high"] - self.params[i]["low"]) * pv + self.params[i]["low"]
 
         return creator.Individual(result)
+
+    def parameter_report(self, ind):
+        for pi, pv in enumerate(ind):
+            param = self.params[pi]
+            range = param["high"] - param["low"]
+            range_loc = (pv - param["low"]) / range * 100.0
+            print(param["attr"] + " in " + str(param["lists"]) + " at " + ("%.2f"%range_loc) + "% of range. Val: " + str(pv) + " Low: " + str(param["low"]) + " High: " + str(param["high"]))
 
     def get_fitnesses(self, pop, label):
         max_wait = round(2.5 * 60) # seconds
@@ -414,6 +424,7 @@ class CellFitter(object):
             print("Generation", g+1, "out of", NGEN, "COMPLETE")
             print('Best fitness:', self.best.fitness.values[0])
             print('Best individual', self.best)
+            self.parameter_report(self.best)
 
 
         return self.pop
