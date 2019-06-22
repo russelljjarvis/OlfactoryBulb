@@ -11,7 +11,7 @@ git checkout $branch_name
 
 cd notebooks
 jupyter nbconvert fitting.ipynb --to python
-xvfb-run python fitting.py $1 | tee /dev/tty > fitting.txt
+xvfb-run ipython fitting.py $1 | tee /dev/tty > fitting.txt
 
 git add .
 git commit -m 'fit results'
@@ -21,4 +21,4 @@ git push origin $branch_name
 
 git checkout master
 
-sudo poweroff
+#sudo poweroff
