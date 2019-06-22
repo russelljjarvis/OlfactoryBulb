@@ -185,7 +185,7 @@ class TC(OlfactoryBulbCell):
         {"attr": "ena", "low": 20.0, "high": 80.0, "lists": ["all"]},
         {"attr": "ek", "low": -100.0, "high": -50.0, "lists": ["all"]},
         {"attr": "e_pas", "low": -90.0, "high": -50.0, "lists": ["all"]},
-        {"attr": "g_pas", "low": 0, "high": 0.00004, "lists": ["all"]},
+        {"attr": "g_pas", "low": 0, "high": 0.00040, "lists": ["all"]},
         {"attr": "sh_Na", "low": 0, "high": 10, "lists": ["all"]},
         {"attr": "tau_CaPool", "low": 1, "high": 300, "lists": ["all"]},
 
