@@ -9,6 +9,7 @@ branch_name=fit-`date +%Y-%m-%d-%H-%M-%S`
 git branch $branch_name
 git checkout $branch_name
 
+cd notebooks
 jupyter nbconvert fitting.ipynb --to python
 xvfb-run python fitting.py $1 | tee /dev/tty > fitting.txt
 
