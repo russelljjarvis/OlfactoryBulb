@@ -603,10 +603,15 @@ proc geom_nseg() {
   forsec all { nseg = int((L/(0.1*lambda_f(100))+.999)/2)*2 + 1  }
 }
 proc biophys() {
-  forsec all {
+  forsec all    {
     insert pas
-      g_pas = 0.001
-      e_pas = -70
+    insert Na
+    insert Kd
+  }
+  forsec somatic {
+    insert KM
+    insert KA
+    insert Ih
   }
 }
 proc biophys_inhomo(){}

@@ -88,3 +88,19 @@ pre-selection based surrogate GA (doi:10.1016/j.swevo.2011.05.001)
 
 
 using multiproces library (diff from python built in - better serialization)
+
+channels have some questions
+	-all tests to constrain by is somatic response
+	-there are some papers showing channel distribution in apical dends
+	-it's not clear where to put the channels, soma dend lat dend?
+		- could look to see where they put them in the other models
+
+
+KCA affects the input resistance a lot
+
+
+
+NEED TO CHOSE THE CHANNELs for GCs
+REFIT MCS
+AND GET MORPHO AND FIT TCS
+
