@@ -1,13 +1,14 @@
 git checkout master
+git reset --hard
 git pull
-
-cd prev_ob_models/Birgiolas2020/Mechanisms
-nrnivmodl
-cd ~/OlfactoryBulb
 
 branch_name=fit-`date +%Y-%m-%d-%H-%M-%S`
 git branch $branch_name
 git checkout $branch_name
+
+cd prev_ob_models/Birgiolas2020/Mechanisms
+nrnivmodl
+cd ~/OlfactoryBulb
 
 cd notebooks
 jupyter nbconvert fitting.ipynb --to python
