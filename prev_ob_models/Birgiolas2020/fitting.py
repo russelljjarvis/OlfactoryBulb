@@ -287,7 +287,7 @@ class CellFitter(object):
             param = self.params[pi]
             range = param["high"] - param["low"]
             range_loc = (pv - param["low"]) / range * 100.0
-            print(param["attr"] + " in " + str(param["lists"]) + " at " + ("%.2f"%range_loc) + "% of range. Val: " + str(pv) + " Low: " + str(param["low"]) + " High: " + str(param["high"]))
+            print(("%.2f"%range_loc) + "% of range. Val: " + str(pv) + " Low: " + str(param["low"]) + " High: " + str(param["high"]) + " ATTR: " + param["attr"] + " in " + str(param["lists"]))
 
     def get_fitnesses(self, pop, label):
         max_wait = round(2.5 * 60) # seconds
