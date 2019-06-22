@@ -120,7 +120,7 @@ class GC(OlfactoryBulbCell):
     params = [
         { "attr": "diam",  "low": 0.1, "high": 3.0, "lists": ["apical"]},
 
-        { "attr": "Ra",    "low": 5.0, "high": 20.0, "lists": ["all"]},
+        { "attr": "Ra",    "low": 5.0, "high": 120.0, "lists": ["all"]},
         { "attr": "cm",    "low": 0.1, "high": 4.0, "lists": ["all"]},
         { "attr": "ena",   "low": 10.0, "high": 50.0, "lists": ["all"]},
         { "attr": "ek",    "low": -100.0, "high": -30.0, "lists": ["all"]},
@@ -130,9 +130,9 @@ class GC(OlfactoryBulbCell):
         { "attr": "gbar_Na", "low": 0, "high": 0.1, "lists": ["all"]},
         { "attr": "gbar_Kd", "low": 0, "high": 0.1, "lists": ["all"]},
 
-        { "attr": "gbar_KA", "low": 0, "high": 0.01, "lists": ["somatic"]},
+        { "attr": "gbar_KA", "low": 0, "high": 0.02, "lists": ["somatic"]},
         { "attr": "eh",      "low": -50.0, "high": -10.0, "lists": ["somatic"]},
-        { "attr": "gbar_Ih", "low": 0, "high": 0.000002, "lists": ["somatic"]},
+        { "attr": "gbar_Ih", "low": 0, "high": 0.000004, "lists": ["somatic"]},
         { "attr": "gbar_KM", "low": 0, "high": 0.13, "lists": ["somatic"]},
 
     ]
@@ -148,8 +148,8 @@ class GC1(GC):
 class GC2(GC):
     def __init__(self):
         super(GC2, self).__init__(cell_id=2)
-        # self.param_values = [1.2933074765569572, 15.964921848533345, 0.6209279330160213, 24.833205129696545, -81.5462724857123, -89.47831949412408, 3.670390933276994e-05, 3.302314197046086, 0.012922940997028532, 0.025154533917713457, 0.0020329731062468234, -47.374038053028265, 4.352344991619022e-07, 0.024231291210945503]
-        # self.set_model_params(self.param_values)
+        self.param_values = [0.8710267875973179, 14.641561962581802, 1.297028578568163, 23.542384925570374, -66.14931267317124, -86.9860149734769, 7.372686439889864e-05, 9.015897486544564, 0.0663024552362425, 0.08054323387277286, 0.009253490640782557, -42.24621117356369, 2.416646001483452e-06, 0.0027768216611947063]
+        self.set_model_params(self.param_values)
 
 class GC3(GC):
     def __init__(self):
@@ -190,7 +190,7 @@ class TC(OlfactoryBulbCell):
         {"start": 0.000264, "attr": "gbar_Kslow", "low": 0, "high": 0.001, "lists": ["all"]},
         {"start": 0.07215, "attr": "gbar_KA", "low": 0, "high": 0.02, "lists": ["all"]},
         {"start": 0.001, "attr": "gbar_KCa", "low": 0, "high": 0.016, "lists": ["all"]},
-        {"start": 0.00081441, "attr": "gbar_LCa", "low": 0, "high": 0.0005, "lists": ["all"]},
+        {"start": 0.00081441, "attr": "gbar_LCa", "low": 0, "high": 0.0010, "lists": ["all"]},
 
         {"start": -30.805, "attr": "eh", "low": -40.0, "high": -10.0, "lists": ["apical"]},
         {"start": 0.00335, "attr": "gbar_Ih", "low": 0, "high": 0.000003, "lists": ["apical"]},
