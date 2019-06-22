@@ -58,26 +58,26 @@ class MC(OlfactoryBulbCell):
 
     # Parameters and their ranges used for fitting
     params = [
-        {"start": 1, "attr": "diam", "low": 0.1, "high": 5.0, "lists": ["apical", "basal", "axonal"]},
-        {"start": 34.77, "attr": "Ra", "low": 1.0, "high": 150.0, "lists": ["all"]},
-        {"start": 2.706, "attr": "cm", "low": 0.1, "high": 2.0, "lists": ["all"]},
-        {"start": 49.95, "attr": "ena", "low": 20.0, "high": 80.0, "lists": ["all"]},
-        {"start": -70.03, "attr": "ek", "low": -100.0, "high": -50.0, "lists": ["all"]},
-        {"start": -64.42, "attr": "e_pas", "low": -90.0, "high": -50.0, "lists": ["all"]},
-        {"start": 0.0005955, "attr": "g_pas", "low": 0, "high": 0.00004, "lists": ["all"]},
-        {"start": 0.5955, "attr": "sh_Na", "low": 0, "high": 10, "lists": ["all"]},
-        {"start": 10, "attr": "tau_CaPool", "low": 1, "high": 300, "lists": ["all"]},
+        {"attr": "diam", "low": 0.1, "high": 5.0, "lists": ["apical", "basal", "axonal"]},
+        {"attr": "Ra", "low": 1.0, "high": 150.0, "lists": ["all"]},
+        {"attr": "cm", "low": 0.1, "high": 2.0, "lists": ["all"]},
+        {"attr": "ena", "low": 20.0, "high": 80.0, "lists": ["all"]},
+        {"attr": "ek", "low": -100.0, "high": -50.0, "lists": ["all"]},
+        {"attr": "e_pas", "low": -90.0, "high": -50.0, "lists": ["all"]},
+        {"attr": "g_pas", "low": 0, "high": 0.00004, "lists": ["all"]},
+        {"attr": "sh_Na", "low": 0, "high": 10, "lists": ["all"]},
+        {"attr": "tau_CaPool", "low": 1, "high": 300, "lists": ["all"]},
 
-        {"start": 0.87485, "attr": "gbar_Na", "low": 0, "high": 0.1, "lists": ["all"]},
-        {"start": 0.0297, "attr": "gbar_Kd", "low": 0, "high": 0.1, "lists": ["all"]},
-        {"start": 0.000264, "attr": "gbar_Kslow", "low": 0, "high": 0.001, "lists": ["all"]},
-        {"start": 0.07215, "attr": "gbar_KA", "low": 0, "high": 0.02, "lists": ["all"]},
-        {"start": 0.001, "attr": "gbar_KCa", "low": 0, "high": 0.016, "lists": ["all"]},
-        {"start": 0.00081441, "attr": "gbar_LCa", "low": 0, "high": 0.0005, "lists": ["all"]},
+        {"attr": "gbar_Na", "low": 0, "high": 0.1, "lists": ["all"]},
+        {"attr": "gbar_Kd", "low": 0, "high": 0.1, "lists": ["all"]},
+        {"attr": "gbar_Kslow", "low": 0, "high": 0.001, "lists": ["all"]},
+        {"attr": "gbar_KA", "low": 0, "high": 0.02, "lists": ["all"]},
+        {"attr": "gbar_KCa", "low": 0, "high": 0.016, "lists": ["all"]},
+        {"attr": "gbar_LCa", "low": 0, "high": 0.0005, "lists": ["all"]},
 
-        {"start": -30.805, "attr": "eh", "low": -40.0, "high": -10.0, "lists": ["apical"]},
-        {"start": 0.00335, "attr": "gbar_Ih", "low": 0, "high": 0.000003, "lists": ["apical"]},
-        {"start": 0.000107, "attr": "gbar_CaT", "low": 0, "high": 20e-3, "lists": ["apical"]},
+        {"attr": "eh", "low": -40.0, "high": -10.0, "lists": ["apical"]},
+        {"attr": "gbar_Ih", "low": 0, "high": 0.000003, "lists": ["apical"]},
+        {"attr": "gbar_CaT", "low": 0, "high": 20e-3, "lists": ["apical"]},
     ]
 
     cell_type = "MC"
@@ -154,20 +154,20 @@ class GC2(GC):
 class GC3(GC):
     def __init__(self):
         super(GC3, self).__init__(cell_id=3)
-        # self.param_values = [1.0165229591551166, 8.742223695142892, 1.3325653588637776, 39.55645462323818, -54.418207489400096, -85.55338135654503, 6.320847994173219e-05, 2.779506490030582, 0.01794877469106408, 0.03540413668753805, 0.003160423997086609, -29.116485041419523, 2.6361301968714977e-07, 0.04200071666187057]
-        # self.set_model_params(self.param_values)
+        self.param_values = [0.9269014411917871, 70.42171573661824, 1.971342274619708, 47.107745396041246, -60.5888373035133, -95.78092714858376, 6.0612146854136255e-05, 1.6251939756805538, 0.028139028565849572, 0.08172220519881213, 0.01960472171669605, -42.72464976323857, 4.056438596462772e-07, 0.003498922852414627]
+        self.set_model_params(self.param_values)
 
 class GC4(GC):
     def __init__(self):
         super(GC4, self).__init__(cell_id=4)
-        # self.param_values = [0.9025324638516083, 8.753031686148644, 0.9380308731945421, 46.213018519563214, -52.35792469538774, -87.9408887746017, 5.283149360026259e-05, 4.956645884463499, 0.01012695819079385, 0.02205488674836242, 0.0034793106167388304, -26.786851403254495, 6.0673504219961e-07, 0.04718614854337389]
-        # self.set_model_params(self.param_values)
+        self.param_values = [0.5114875621011717, 56.287978683260214, 3.019679134249003, 49.985672253714036, -71.41246844731594, -79.75830231240892, 0.0001300072569648193, 2.405714780327303, 0.044097744018598804, 0.09519223829113252, 0.01998937568550179, -38.758891208315504, 3.07352369280049e-06, 0.10517740899764226]
+        self.set_model_params(self.param_values)
 
 class GC5(GC):
     def __init__(self):
         super(GC5, self).__init__(cell_id=5)
-        # self.param_values = [0.9376348175328878, 11.591714654531046, 1.0324034688967776, 28.54236760189409, -84.25400415668759, -86.38671125769042, 5.576876711838849e-05, 0.6815923359096576, 0.015906079474993826, 0.06193378170794706, 0.000692474429499574, -40.074832002660145, 2.888298777423034e-07, 0.005007473558389143]
-        # self.set_model_params(self.param_values)
+        self.param_values = [0.4458196638439258, 5.530872438255849, 3.9867839687467135, 40.026986969229476, -88.78582114310854, -88.46122334498621, 0.00014541146987599968, 0.8940434950243983, 0.06663279131779606, 0.08460986287630978, 0.01977457191146717, -34.14221788413268, 3.593304592057196e-06, 0.014760038065061307]
+        self.set_model_params(self.param_values)
         
         
         
@@ -175,26 +175,26 @@ class TC(OlfactoryBulbCell):
 
     # Parameters and their ranges used for fitting
     params = [
-        {"start": 1, "attr": "diam", "low": 0.1, "high": 5.0, "lists": ["apical", "basal", "axonal"]},
-        {"start": 34.77, "attr": "Ra", "low": 1.0, "high": 150.0, "lists": ["all"]},
-        {"start": 2.706, "attr": "cm", "low": 0.1, "high": 2.0, "lists": ["all"]},
-        {"start": 49.95, "attr": "ena", "low": 20.0, "high": 80.0, "lists": ["all"]},
-        {"start": -70.03, "attr": "ek", "low": -100.0, "high": -50.0, "lists": ["all"]},
-        {"start": -64.42, "attr": "e_pas", "low": -90.0, "high": -50.0, "lists": ["all"]},
-        {"start": 0.0005955, "attr": "g_pas", "low": 0, "high": 0.00004, "lists": ["all"]},
-        {"start": 0.5955, "attr": "sh_Na", "low": 0, "high": 10, "lists": ["all"]},
-        {"start": 10, "attr": "tau_CaPool", "low": 1, "high": 300, "lists": ["all"]},
+        {"attr": "diam", "low": 0.1, "high": 5.0, "lists": ["apical", "basal", "axonal"]},
+        {"attr": "Ra", "low": 1.0, "high": 150.0, "lists": ["all"]},
+        {"attr": "cm", "low": 0.1, "high": 2.0, "lists": ["all"]},
+        {"attr": "ena", "low": 20.0, "high": 80.0, "lists": ["all"]},
+        {"attr": "ek", "low": -100.0, "high": -50.0, "lists": ["all"]},
+        {"attr": "e_pas", "low": -90.0, "high": -50.0, "lists": ["all"]},
+        {"attr": "g_pas", "low": 0, "high": 0.00004, "lists": ["all"]},
+        {"attr": "sh_Na", "low": 0, "high": 10, "lists": ["all"]},
+        {"attr": "tau_CaPool", "low": 1, "high": 300, "lists": ["all"]},
 
-        {"start": 0.87485, "attr": "gbar_Na", "low": 0, "high": 0.1, "lists": ["all"]},
-        {"start": 0.0297, "attr": "gbar_Kd", "low": 0, "high": 0.1, "lists": ["all"]},
-        {"start": 0.000264, "attr": "gbar_Kslow", "low": 0, "high": 0.001, "lists": ["all"]},
-        {"start": 0.07215, "attr": "gbar_KA", "low": 0, "high": 0.02, "lists": ["all"]},
-        {"start": 0.001, "attr": "gbar_KCa", "low": 0, "high": 0.016, "lists": ["all"]},
-        {"start": 0.00081441, "attr": "gbar_LCa", "low": 0, "high": 0.0010, "lists": ["all"]},
+        {"attr": "gbar_Na", "low": 0, "high": 0.1, "lists": ["all"]},
+        {"attr": "gbar_Kd", "low": 0, "high": 0.1, "lists": ["all"]},
+        {"attr": "gbar_Kslow", "low": 0, "high": 0.002, "lists": ["all"]},
+        {"attr": "gbar_KA", "low": 0, "high": 0.02, "lists": ["all"]},
+        {"attr": "gbar_KCa", "low": 0, "high": 0.016, "lists": ["all"]},
+        {"attr": "gbar_LCa", "low": 0, "high": 0.0010, "lists": ["all"]},
 
-        {"start": -30.805, "attr": "eh", "low": -40.0, "high": -10.0, "lists": ["apical"]},
-        {"start": 0.00335, "attr": "gbar_Ih", "low": 0, "high": 0.000003, "lists": ["apical"]},
-        {"start": 0.000107, "attr": "gbar_CaT", "low": 0, "high": 20e-3, "lists": ["apical"]},
+        {"attr": "eh", "low": -40.0, "high": -10.0, "lists": ["apical"]},
+        {"attr": "gbar_Ih", "low": 0, "high": 0.000003, "lists": ["apical"]},
+        {"attr": "gbar_CaT", "low": 0, "high": 20e-3, "lists": ["apical"]},
     ]
 
     cell_type = "TC"
