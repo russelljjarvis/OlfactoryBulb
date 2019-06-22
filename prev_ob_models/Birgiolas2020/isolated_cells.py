@@ -41,6 +41,10 @@ class OlfactoryBulbCell(IsolatedCell):
                 setattr(h, attr, pv)
             else:
                 for param_list in self.params[pi]["lists"]:
+                    if not hasattr(self.cell, param_list):
+                        print("List",param_list, "not found in cell", self.hoc_template, "Skipping list...")
+                        continue
+
                     if attr == "diam":
                         unmodified_secs = [sec for sec in getattr(unmodified_cell, param_list)]
 
@@ -203,8 +207,8 @@ class TC(OlfactoryBulbCell):
 class TC1(TC):
     def __init__(self):
         super(TC1, self).__init__(cell_id=1)
-        #self.param_values = [3.22389443491247, 2.81865928031078, 0.33261043003167834, 27.0037817821923, -64.93732914068036, -73.25204775921887, 2.1361316231147274e-05, 3.76535811520783, 4.308024855943862, 0.03186952629227804, 0.023795201285494796, 0.0007185750073984963, 0.002526117846022963, 0.0009455163544555489, 0.00016863361902873404, -36.099624268474926, 3.655648607819723e-07, 0.004428920251185234]
-        #self.set_model_params(self.param_values)
+        self.param_values = [0.6974291961538065, 143.42255121583767, 0.7006355476549876, 40.98303242034202, -62.57540127203789, -59.68935853945891, 3.199490752330027e-06, 2.5008488475938497, 62.001706258097066, 0.03624665155890876, 0.037956881608827125, 0.0008777322851391567, 0.016438379614951724, 0.003835019453272065, 7.854571441104231e-07, -11.243175002301268, 1.5189746458583777e-06, 0.014002723766760471]
+        self.set_model_params(self.param_values)
 
 class TC2(TC):
     def __init__(self):

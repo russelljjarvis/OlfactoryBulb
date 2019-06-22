@@ -22,4 +22,4 @@ git push origin $branch_name
 
 git checkout master
 
-#sudo poweroff
+sudo poweroff
