@@ -132,7 +132,7 @@ class GC(OlfactoryBulbCell):
 
         { "attr": "gbar_KA", "low": 0, "high": 0.01, "lists": ["somatic"]},
         { "attr": "eh",      "low": -50.0, "high": -10.0, "lists": ["somatic"]},
-        { "attr": "gbar_Ih", "low": 0, "high": 0.000002, "lists": ["somatic"]},
+        { "attr": "gbar_Ih", "low": 0, "high": 0.000004, "lists": ["somatic"]},
         { "attr": "gbar_KM", "low": 0, "high": 0.13, "lists": ["somatic"]},
 
     ]
