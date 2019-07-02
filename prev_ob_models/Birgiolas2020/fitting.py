@@ -134,6 +134,9 @@ class CellFitter(object):
 
     def evaluate(self, param_set, raw_scores=False):
 
+        # import pydevd
+        # pydevd.settrace('192.168.0.100', port=4200)
+
         try:
             score = self.get_workitem_score({
                 "model_class": self.fitting_model_class,
@@ -421,10 +424,13 @@ class CellFitter(object):
 
             self.top = toolbox.select(self.pop)
             self.best = self.top[0]
-            print("Generation", g+1, "out of", NGEN, "COMPLETE")
-            print('Best fitness:', self.best.fitness.values[0])
-            print('Best individual', self.best)
+
+            df, score = self.get_best_score()
+            print(df.transpose())
             self.parameter_report(self.best)
+            print('Best individual', self.best)
+            print('Best fitness:', self.best.fitness.values[0])
+            print("Generation", g+1, "out of", NGEN, "COMPLETE")
 
 
         return self.pop
