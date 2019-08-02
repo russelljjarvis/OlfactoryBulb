@@ -1,5 +1,6 @@
 from prev_ob_models.utils import RunInClassDirectory, IsolatedCell
 import os, sys
+import importlib
 
 class OlfactoryBulbCell(IsolatedCell):
     def __init__(self, cell_id):
@@ -15,17 +16,35 @@ class OlfactoryBulbCell(IsolatedCell):
             h.celsius = 35
             h.cvode_active(1)
 
+            cell_name = self.cell_type + str(cell_id)
+
             # Load the cell HOC file (they follow MC1.hoc, GC1.hoc, ... pattern)
             os.chdir("Cells")
-            self.hoc_path = os.path.abspath(self.cell_type + str(cell_id) + ".hoc")
+            self.hoc_path = os.path.abspath(cell_name + ".hoc")
             h.load_file(self.hoc_path)
             os.chdir("..")
 
             # Build the cell
             self.hoc_template = self.cell_type + str(cell_id)
             self.cell = getattr(h, self.hoc_template)()
+
+            # Apply 3D transformations, if any
+            os.chdir("Cells")
+            transformation_file = self.cell_type + "Transforms.py"
+            if os.path.exists(transformation_file):
+                try:
+                    print('Applying: ' + transformation_file)
+                    exec ("from " + self.cell_type + "Transforms import Transform" + cell_name + " as Transform")
+                    Transform.apply_on(str(self.cell))
+                except:
+                    print('Could not load Transform for '+ cell_name)
+
+            os.chdir("..")
+
             self.h = h
             self.soma = self.cell.soma
+
+            h.init() # without this, h.run() with multiple cells produces a convergence error
 
     def set_model_params(self, param_values):
         from neuron import h

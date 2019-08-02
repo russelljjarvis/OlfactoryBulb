@@ -34,6 +34,12 @@ class RunInClassDirectory:
 
 class IsolatedCell(object):
     def close_window(self, name_contains):
+        """
+        Closes a NEURON window that matches the parameter string
+
+        :param name_contains: The string to match in window name
+        :return: Nothing
+        """
         if not hasattr(self,"pwm"):
             from neuron import h
             self.pwm = h.PWManager()

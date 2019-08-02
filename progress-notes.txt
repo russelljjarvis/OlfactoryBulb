@@ -1,0 +1,345 @@
+BlenderNEURON
+
+Need a 2WAY interface to NEURON
+
+one option is to make Blender the primary GUI to NEURON
+	-essentially reimplement NEURON gui or important parts of it in Blender
+	-so that many common tasks can be done from blender, and NEURON can be used on top as needed
+		-run init window, run, init, tstop, dt, others
+		-cvode checkbox	
+		-current injection - but now with placement through blender
+		-plotting - that could be left to NEURON for now
+			-alternative would be to use some custom plotting lib in Blender i.e. matplotlib - WRTW?
+		
+	-plots will be the most used function, but anything that requires a button or text, can be done in Blender
+	-NRN GUI can be launched with a button from Blender
+
+the other issue is making section edits within blender and have those changes transfered to NEURON
+	currently, the process is to gather the sections in NEURON, setup recorders if needed, sim, and then send section 3d and voltage data across XMLRCP to Blender
+	there is a question of whether XMLRCP is the best way to transfer this data
+	once transfered, blender code examines the data and constructs as series of bevelled curves, convets them to meshes and then assigns materials to sections, and animates the material properties based on the voltage values
+
+	so what are some ways to implement the back2neuron interface? some issues
+	
+
+	the hug the layer feature only works well with meshes
+		so the curves would need to be converted to meshes, simulated, then the transformation info retrieved back
+	
+
+	the layer hug is dependent on the 2way comm
+	
+	what we need is a way to perform manipulations of section 3d data and then have it translate back to NEURON
+		the issue is that the NRN to Blender mapping is not 1-1, NRN is basically a subset of blender objects, it just happens that sections map well onto bevelled bezier curves due to the 3d+diam point information. 
+		blender allows manipulation of the 3d bezier curves, like adding points, translating them, rotations, scaling
+
+		as long as the sections stay as BBCs the information is retained to adjust the 3d point data
+
+		actually a section could be mapped in different ways too: ie points can be mapped as spheres, or 2 3d points can be mapped to an individual BBC, so the BBCs are split at each 3d point
+
+		in other words, a section and it's 3D information can be represented or mapped in different ways
+			some of these ways allow different kinds of manipulations in Blender
+			as long as those manipulations don't prevent the INVERSE mapping, they should be allowed
+
+		so for the layer hug:
+			-ultimatallet i need them to be meshes
+			-if the BBC 2 mesh converted mesh vertices are not modified, i can perform the inverse map
+			-we'll keep them as is
+			-then i can set up the forces simulation, and from there obtain the resulting new 3d info
+			-use the new info to update the section state, and then send the state back to NEURON
+			-NRN Section -> Blender Section -> Blender BBC -> Section Mesh -> Physics Sim, mesh update -> Section BBC or Blender Section
+
+
+		for translations
+			could translate Blender Section -> BBC -> Modify BBC points/diam -> Update Blender Section, Update NEURON
+
+
+the issue of XMLRCP
+	there are several options - 
+		now XMLRCP - xml,htpp,network,2X overhead - upside is that it can be done across machines
+			in theory there is some advantage to doing this because one could stream sim results to Blender, vs save them and then replay them separately
+			i think this is more of a long term possiblitiy, it would need to overcome any network comm limits placed to do this, and it could be implemented later
+		tmp file
+			-no serialization overhead, but file system time.
+			-simple, cross platform interface. 
+			-not the best for simple messaging interface -- a hybrid XML+File approach might be better. XML for messaging, File for payloads
+			-sims could be saved to such files and then later loaded into blender for replay
+		some form of shared memory
+			-mmaped files - easy interface, skips FS, similar to tmp file option but much faster
+			-memcached/redis - a 3rd process that runs in the bg
+			-multiprocessing shared_memory - need to convert to primitives
+
+		
+
+		
+	shared memory - mmap
+		the issue is that it needs an allocated file before I can read-write to it
+		which kind of defeats the purpose if I have to write to the system anyway
+		it only saves IO when i can create one large file, but then I need a way to manage it's contents, if i have multiple messages enqueed, then i need to keep track of the file contents
+		and keep the payloads separate - that's a lot of extra complexity that i thought i didn't need with mmap - I just want to create "
+
+	there doest seem like there is a simple, cross platform way to do this - xmlrcp+files seems to be the best option
+
+state model setup
+	-need a way to create an abstract state model of each cell/section/3d point
+	-the state model would have different mappings
+		-eg. abstract -> BBC
+		-abstract -> BBC -> Mesh
+		-abstract -> Sections/3D points
+
+	-the end products of these mappings can be manipulated in blender and then converted back to the abstract state
+	-how would this work?
+		-NEURON sections can be converted to abstract object, which is then sent over to Blender
+			-abstract object is built in NEURON and then rcpd over to Blender - that's now
+			-should Blender rech out to NRN and have it send the model?
+			-there is something appealing about Blender doing all the work - but i know there are NRN hairs that need to be dealt with
+				-finitialize, vector records, recording variable names
+				-then there are groups - which is a way to specify:
+					-which root sections to export, 
+					-how to color them, how to convert them to Blender OBJECTS
+					-to BBCs their params
+					-and how much activity to record - recording vectors at root section, each section, each pt
+				-the issue is the GUI for specifying these
+					-the workflow is something like:
+						-open blender, then neuron (either indep+load package or via button in blender, separate process) establish 2-way
+						-load model with a script or hoc file - either in neuron or blender console
+
+
+GUI for interacting with NEURON from blender
+	there are the basic buttons - which are eays to impltement in belnder
+	but the more harder stuff is the GUI fro interacting with the cells and exproting them for display in Blender
+	in the old version, this was maneged through display groups, which scpeificied common params for al l the cells in the gourp
+
+	now were working with the state model idea and mappings
+	how do we tsanslate this into a GUI?
+	
+	do the cell groups still make sense? or should we do something different?
+	to answer this we must examine what the cell groups do, what has been their purpose?
+
+	the idea was that some cells needed more or less detail	- the detail level could be specified and then all cells within that group would have such detail level
+
+	the list UI provides a way to list items show them and select ONE at a time - with an index
+
+	how do i map this onto what I need?
+		-one possibilit is to select cells one at a time and then explort each to blender, setting display properties as needed ON EACH CELL
+		-export all cells with some default settings
+		-a list of groups - all by default
+		-selecting a list shows a list of cells, the included cells have checkboxes next to them, which can be changed to add/remove cells
+
+	there is a los the issue of actually working with cells - modifying them and sending them back
+	NRN persistence issue - i could make my changes in blender, update the corresponding sections and 3d pts in NEURON, but then persisting them is an issue
+		currently the only way NEURON can save what's instantiated is through that crappy NML converter
+		which doesnt actually convert correctly and not valid NML anyway
+		cell builder, which is whats used to create the models from SWCs 
+		transformation files
+		these files are coupled to a HOC or some starting state python file, or none at all
+		they contain the commands necessary to geometrically modify the starting HOC/py model
+		this allows for having one starter cell and several transformations which transform it differently -- e.g rotations, placemnts on layer, dendrite movevements, etc...
+		it can be as simple as hoc+trans.file -> updated cell
+		or python model -> root cell -> transform -> updated cell
+		transform files are self-contained .py files that update section 3d information
+		this does create the issue of multi-update cycles, where i load a model, 2blender, modify3d, transofrm file, 2neuron
+			at that point once i apply the transformation, if i send it back, and modify again, do i need to keep the 1st trans?
+			for 3d/diam info no -> the informatino would be absolute, and can just update back
+		
+			adding sections?
+			deleting sections? esp if they have mechs? iclamps? plots?
+
+			what about iclamps?
+				the idea is to export to blender, then select a section and place a IClamp on it
+				send the command back to nrn, simulate, and show the resulting sim
+			
+			
+next steps:
+	now need a way to import cells from NRN
+		i have the group settings and cell membership
+		i can send that info do nrn, and it will send me back what it has
+		need to store it in blender, in an abstract form
+			then be able to convert from one form into another as needed by manipulations
+			NRN -> Blender
+				Once in blender, cells can be converted to any display format needed for modifications
+				The key is the storage format of the cells
+				The properties approach might work ok because I can define the structure declaratively
+	
+
+
+the issue is that some of these classes are necessary for binding to the UI widgets
+	so i cant get rid of the UI properties completelly, but need them for attaching to panels
+	but the props do allow getters and setters, so technically they could function like proxy classes for the underlying classes that actually store all the info
+	sort of like UI layer to the logic underneath
+	those UI properties have to be registered to the scene
+
+	while the data layer can be attached to types.Object like BN_node
+		the data shold be part of node anyway
+	
+	the classes are also redundant
+	im redeclaring pretty much the same thing in nrn and in blender
+	if the classes are unified, i could just initialize them differently based on where im at
+	conversions would be easy to_dict/from_dict
+	any changes would also be uniform
+	DRYer
+	there are some special nrn methods/ blender? not really, just conversion and activity clearing - both nrn and blender have those
+	we could subclass the neuron class so that it can have those extra methods 
+	
+
+
+now that the data is in blender, what is the next step?
+	GET THE TESTS TO PASS! DONE
+
+	again the goal is to show, then make some edits, and import back to nrn
+	basic example, translate cell, push changes back to nrn. to do that:
+	show as blender object, composed of BBCs, translate the object, then when done, read the transformed coords, send them to NRN, receive back for confirmation
+	
+there is the idea of different mappings and mapping specific code should be separate from each other
+	then there are settigns on just how to show them, colors, emit mappings, randomization
+	then there are camera utility functions that were useful for NMDLB
+	
+at this point we have the abstract data strucutres in Blender
+	we want to be able to have different views of those structures
+		group view, cell view, section view
+	each view has it's own manipulation abilities, which can be translated back to the abstract structures
+		and then back to nrn
+	what does a view do?
+		oress an operator which creates views of selected groups
+		its a view of a group
+		most fundamelaly it's just different object container levels - well no not just
+			you have the as BBC vs Mesh vs Mesh+joints
+	we probably should just start with a simple example and then refactor later
+		To Cell object -> translate -> To RootGroup => to NRN => to blender as confirmation
+
+		Group with cell interaction granularity -> each root+children become an object -> each object contains BBCs -> translate ->
+			Object BBC points to RootGroup/sections -> to NRN -> to Blender
+
+	this mapping thing - how do i organize it?
+		right now its just a root group to cell curve object map
+
+		its purpose is to be able to group->objects
+		AND objects -> group
+		i kind of broker
+		
+	
+
+
+how do we persist the changes?
+	code generation is pretty much the only option
+	a set of commands that update/recrease the section points
+	dont want to duplicate the commands: would eval() + command strings work?
+	another alternative would be to store the groups as json and then restore them with blenderneuron
+		this would require bn for any models
+	
+how do we specify what to align
+	layer - DONE
+	group? - sure
+	mitral cells have certain dendrites that should be kept in place, while others aligned to the layer
+		could be by pattern match - "x" in name
+		doesnt make sense to have the user select it
+	need to specify the which section should be passive - eg "soma"
+	then which ones should be aligned
+
+
+the problem is that MC lateral dendrites are very long and result in very long sections
+	which may or may not fit the layer, esp the high curvature areas
+	they need to bend at some interval like every 100um - thus new joints
+	the issue is that we're working with the assumption of one object-> one section
+	how would the split be achieved?
+	would need to create more than one container per large section
+
+positioning - random fill + alignment
+
+
+TODO:
+	-make the empties parents so they would move with soma DONE
+	-debug the re-importing after sim - some unlink bug -DONE?
+	-convert the meshes back to beziers and get their new, simulation affected results DONE
+	-remove extraneus layeralignment.py files + init lines DONE
+	-change the import export buttons so they do only single actions DONE
+	-Remove interaction level from goup view classes DONE
+
+	-allow highlighting DONE
+	-finish the layer alignment panel DONE
+	
+	-disable gravity DONE
+	-test with real layer + real MC  DONE
+	-implement getting data back from long split sections TODO
+	-test  save after alignment DONE
+
+
+	-for each cell, work out how to position and align them (MCTCs and GCs) - alignment vectors? DONE
+	-align some cells to layers and align a few MCs to real layer at real position DONE
+	-work out how to save this to DB for later loading
+	-work out how to build a slice/column model of arbitrary dims - maybe using blender operators for help?
+
+
+
+
+consider what to do when the OPL is thicker than the length of the apical dend
+	when it's thicker the glom wont be long enough to reach the 
+	perhaps just move the apical dendrite up, without actually changing the surface area
+
+Placement of MCs
+	pick a point in MCL it will be random
+	then need to find the closest glomerulus - closest N glomeruli - closest gloms within X distance from the closest glom
+	pick one of the gloms - at random
+	get the vector between the MCL point and the glom
+	set the location of the MC at the MCL point
+	then apply the transformation to align with the MC-GLOM vector
+	what if too long?
+		
+	if too short
+		then extend the apical dend along the MC-G vector by the difference TODO
+
+
+Multiple cell problem:
+	when loading the trans file, there might be multiple cell instances that have been implemented
+	we want to apply the transformation file to a specific instance without hardcoding
+	LOADING
+		I might have 3 instances of MC1 that I have loaded into NEURON
+		I want to apply T1 to 1 and 3rd instances of MC, and T2 to 2nd MC1
+		need a way to specify which instance to apply the trans to
+		h.load_file(hoc)
+		cell = h.MC1()
+
+		import TransformMC1
+		TranformMC1.apply()             # When NRN model is exactly how it was when the transform was created
+		TranformMC1.apply_on('MC1[0]')  # When you know the name of the cell instance
+		TranformMC1.apply_on(str(cell)) # When you don't know the instance name
+
+		
+	SAVING 
+		saving is more weitd because when I save, I'm saving everything that has been loaded - ie multiple cells at a time
+		if the py files are split, then i could apply them one at a time to cells
+		when saving, section keys should be generic
+		I would need to split them at save time by root
+
+TODO something keeps crashing blender in the physics view - when attempting to select one of the meshes/joints/tips
+	-im probably keeping a reference to some bl object somewhere thats not being freed
+
+
+
+
+Define a region of space (column, slice, etc...) that will produce a subset of cell and glom locations wtihin this space
+	Ive set up my slices DONE
+	Can get the points that fall within the slice DONE
+	Fill the slice with matching cells DONE
+	Align the cells to layers DONE
+	Save model transformation TODO ****
+	
+
+Split sections problem
+	-to show in physics, I split long sections, BlenderSection objects
+	-when i want to port those changes back, i have these problems:
+		-neuron does not hve those split sections
+		-the splits are only needed in physics view
+		-but the physics view leverages the sectionview to create sec objects
+		-if i want to update the groups with the new info, i need to join the longs back
+			-this would break the physics view, i would need to remove the view after joining
+
+	-i basically need to not try to alter belndersection objects by splitting and then into sections
+		-the split sections need to be managed separatelly from BlenderSections
+		-set a flag that this is a too long section
+		-based on this flag change the container logic
+
+	
+
+
+TODO: get the info back from the stranded containers including info from split meshes
+	DEBUG WHY Number of points dont match when creating OR reading the split sections
