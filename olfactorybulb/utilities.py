@@ -1,5 +1,7 @@
-from database import *
 import numpy as np
+
+from database import *
+
 np.random.seed(31457)
 
 def pool_experimental_measurements(property_id):
@@ -54,6 +56,5 @@ def pick_from_pooled_experimental_distribution(property_id, type='float', save=T
         prop.save()
 
     return picked
-
 
 

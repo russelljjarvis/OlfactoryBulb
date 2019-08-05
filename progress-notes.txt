@@ -259,7 +259,7 @@ TODO:
 	
 	-disable gravity DONE
 	-test with real layer + real MC  DONE
-	-implement getting data back from long split sections TODO
+	-implement getting data back from long split sections DONE
 	-test  save after alignment DONE
 
 
@@ -321,7 +321,7 @@ Define a region of space (column, slice, etc...) that will produce a subset of c
 	Can get the points that fall within the slice DONE
 	Fill the slice with matching cells DONE
 	Align the cells to layers DONE
-	Save model transformation TODO ****
+	Save model transformation DONE
 	
 
 Split sections problem
@@ -340,6 +340,64 @@ Split sections problem
 
 	
 
+Rotating the soma also rotates the lateral dendrites, which we don't want, we want to align only the apical dend
 
-TODO: get the info back from the stranded containers including info from split meshes
-	DEBUG WHY Number of points dont match when creating OR reading the split sections
+
+MCs positioning and alignment is done, what's next?
+
+	TCs and GCs
+		Need to straighten out the dendrites of TCs
+		GC's? what abotu them?
+			-similar - random pick in GCL, find closest glom, align soma to GLOM
+				dends have to reach OPL
+
+How should the slice builder be organized?
+	Layers, slices, and cell/glom positions are in Blender file
+	Base cell models are in NEURON
+	Information from the DB is in peewee/NEURON - needs to be passed to Blender
+	Once aligned cells need to be saved to .py file
+	
+	it seems to make more sense to start with neuron
+		load cell model classes
+		start blender
+		load the blend file
+		pass in cell metadata info from db to blender
+		let blender build the model, creating cells in NRN as needed
+		its more challenging with blender running on win vs ubuntu
+		for small networks it might be ok
+
+
+TODO: add other cells to slice builder
+	make sure MCs are positioned as desired
+	allow saving the added network
+
+Whats the appraoch to the slice builder?
+	use locations to pick the model, then create the model in neuron, then import the model to blender, then reposition/align, layer align, save
+	this needs to be split into parts:
+		create NRN cells
+		import cells
+		position/align/layer align cells
+
+		save slice network
+
+		shoudl this be done one cell at a time, or in batched steps?
+
+	what will we do with the synapses?
+		they need to be created based on dendrite proximity and cell type
+		have to do it once all the cells are in place
+		
+	what about recreating the model?
+		tranform file is applied onto specific cells
+		each cell instance will have a transform class - Base Cell Class e.g. MCX + TransformMCX_Y => Slice MC[N]
+		each slice will have a certain number of MC1s, MC2s, etc...
+		we need a way to save the transforms so they're specific to cell instances e.g. its a Transform of MC1, but its for the 5th MC1 in the model
+			mc5 = MC1(); TransformMC1_5.apply(mc5)
+			this could be done with different files OR within one file?
+
+	there is a desire to create a single slice file - where all the cell positions are stored
+		EG: ob > slices > TestSlice 
+
+TODO:
+	debug the run.py calls
+			
+		

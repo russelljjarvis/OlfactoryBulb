@@ -46,6 +46,11 @@ class CellModel(BaseModel):
     name = TextField(null=True)
     source = ForeignKeyField(column_name='source_id', field='id', model=Source, null=True)
 
+    class_name = TextField(null=True)
+    apical_dendrite_start = IntegerField(null=True)
+    apical_dendrite_end = IntegerField(null=True)
+    apical_dendrite_reach = FloatField(null=True)
+
     class Meta:
         table_name = 'cell_model'
         primary_key = False

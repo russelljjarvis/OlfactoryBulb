@@ -7,10 +7,10 @@ class OlfactoryBulbCell(IsolatedCell):
         self.cell_id = str(cell_id)
 
         with RunInClassDirectory(OlfactoryBulbCell):
-            # Load the channels
-            os.chdir("Mechanisms")
-            from neuron import h#, gui
-            os.chdir("..")
+            from neuron import h, load_mechanisms
+
+            # Load the channels - from Mechanisms subfolder
+            load_mechanisms("Mechanisms")
 
             h.load_file("stdrun.hoc")
             h.celsius = 35
