@@ -1,5 +1,9 @@
+import cmd
+
 from database import *
 from threading import Thread
+
+from olfactorybulb.blenderprocess import Blender
 from prev_ob_models.Birgiolas2020.isolated_cells import *;
 from olfactorybulb.database import CellModel
 
@@ -35,57 +39,6 @@ class OlfactoryBulb:
         self.cells = list(Cell.select().where(self.within_modeled_region(Cell)))
 
         self.lfp_electrodes = list(LfpElectrode.select())
-
-    def get_base_model_info(self):
-
-        mc_base_models = self.get_models('MC')
-        tc_base_models = self.get_models('TC')
-        gc_base_models = self.get_models('GC')
-
-        return mc_base_models, tc_base_models, gc_base_models
-
-    def get_models(self, cell_type='MC'):
-        return {
-            cm["class_name"]: cm for cm in CellModel \
-            .select() \
-            .where((CellModel.source_id == 'Birgiolas (2020)') & (CellModel.cell_type == cell_type)) \
-            .order_by(CellModel.class_name)
-            .dicts() \
-        }
-
-    def create_mc(self, class_name):
-        exec("mc = " + class_name + "()")
-
-        self.mcs.append(mc)
-
-        return str(mc.soma.name())
-
-    def build_slice(self):
-
-        # Load NRN
-        from neuron import h, gui
-
-        # Connect to Blender
-        import sys; sys.path.append('/home/justas/Repositories/BlenderNEURON/');
-        from blenderneuron.neuronstart import BlenderNEURON as addon;
-
-        # Add methods that can be called from Blender
-        addon.server.register_function(self.get_base_model_info)
-        addon.server.register_function(self.create_mc)
-
-        if addon.client is not None:
-            blender = addon.client.run_command
-        else:
-            raise Exception("Could not connect to Blender. Is the addon running?")
-
-
-        # Load SliceBuilder class inside Blender
-        blender('import sys, os;'
-                'sys.path.append(os.getcwd());'
-                'from olfactorybulb.blender.slicebuilder import SliceBuilder;'
-                'sb = bpy.types.Object.SliceBuilder = SliceBuilder();')
-
-        blender('sb.build();')
 
 
     def build(self):

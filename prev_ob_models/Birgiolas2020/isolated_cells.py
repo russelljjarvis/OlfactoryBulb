@@ -29,14 +29,18 @@ class OlfactoryBulbCell(IsolatedCell):
             self.cell = getattr(h, self.hoc_template)()
 
             # Apply 3D transformations, if any
-            os.chdir("Cells")
+            os.chdir("Cells"); sys.path.append(os.getcwd());
+
             transformation_file = self.cell_type + "Transforms.py"
+
             if os.path.exists(transformation_file):
                 try:
                     print('Applying: ' + transformation_file)
                     exec ("from " + self.cell_type + "Transforms import Transform" + cell_name + " as Transform")
                     Transform.apply_on(str(self.cell))
                 except:
+                    import traceback
+                    traceback.print_exc()
                     print('Could not load Transform for '+ cell_name)
 
             os.chdir("..")

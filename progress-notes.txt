@@ -398,6 +398,6 @@ Whats the appraoch to the slice builder?
 		EG: ob > slices > TestSlice 
 
 TODO:
-	debug the run.py calls
+	MC creation - need apic data in DB and particles
 			
 		
