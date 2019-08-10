@@ -6,7 +6,7 @@ import numpy as np
 from collections import OrderedDict
 from mathutils import Vector
 import random
-from math import pi
+from math import pi, acos
 sys.path.append(os.getcwd())
 from olfactorybulb import slices
 from blenderneuron.blender.utils import fast_get
@@ -40,10 +40,12 @@ class SliceBuilderBlender:
 
     def __init__(self,
                  slice_object_name='TestSlice',
+                 max_mcs=0, max_tcs=5, max_gcs=0,
                  mc_particles_object_name='2 ML Particles',
                  tc_particles_object_name='1 OPL Particles',
                  gc_particles_object_name='4 GRL Particles',
                  glom_particles_object_name='0 GL Particles',
+                 glom_layer_object_name='0 GL',
                  outer_opl_object_name='1 OPL-Outer',
                  inner_opl_object_name='1 OPL-Inner'):
 
@@ -51,11 +53,16 @@ class SliceBuilderBlender:
 
         self.slice_name = slice_object_name
 
+        self.max_mcs = max_mcs
+        self.max_tcs = max_tcs
+        self.max_gcs = max_gcs
+
         self.glom_particles_name = glom_particles_object_name
         self.tc_particles_name = tc_particles_object_name
         self.mc_particles_name = mc_particles_object_name
         self.gc_particles_name = gc_particles_object_name
 
+        self.glom_layer_object_name = glom_layer_object_name
         self.outer_opl_object_name = outer_opl_object_name
         self.inner_opl_object_name = inner_opl_object_name
 
@@ -81,19 +88,42 @@ class SliceBuilderBlender:
                 os.remove(os.path.abspath(os.path.join(dir, file)))
 
     def get_cell_locations(self):
-        slice = bpy.data.objects[self.slice_name]
-
         self.globalize_slice()
 
-        self.mc_locs = self.get_locs_within_slice(self.mc_particles_name, self.slice_name)[:1]
         self.glom_locs = self.get_locs_within_slice(self.glom_particles_name, self.slice_name)
-        self.tc_locs = self.get_locs_within_slice(self.tc_particles_name, self.slice_name)[:1]
-        self.gc_locs = self.get_locs_within_slice(self.gc_particles_name, self.slice_name)[:1]
+
+        self.inner_opl_locs = self.get_opl_locs(self.inner_opl_object_name, self.slice_name)
+        self.outer_opl_locs = self.get_opl_locs(self.outer_opl_object_name, self.slice_name)
+
+        self.mc_locs = self.get_locs_within_slice(self.mc_particles_name, self.slice_name)[:self.max_mcs]
+        self.tc_locs = self.get_locs_within_slice(self.tc_particles_name, self.slice_name)[:self.max_tcs]
+
+        self.gc_locs = self.get_locs_within_slice(self.gc_particles_name, self.slice_name)[:self.max_gcs]
 
         print('Gloms:', len(self.glom_locs))
         print('TCs:', len(self.tc_locs))
         print('MCs:', len(self.mc_locs))
-        # print('GCs:', len(self.gc_locs))
+        print('GCs:', len(self.gc_locs))
+
+    def get_opl_locs(self, opl_name, slice_obj_name):
+
+        obj = bpy.data.objects[opl_name]
+        wm = obj.matrix_world
+
+        locs = fast_get(obj.data.vertices, 'co', 3)
+
+        def globalize(loc):
+            return np.array(wm * Vector(loc))
+
+        # Globalize the coordinates
+        locs = np.array(list(map(globalize, locs)))
+
+        slice_obj = bpy.data.objects[slice_obj_name]
+
+        return np.array([pt
+                         for pt in locs
+                         if self.is_inside(Vector(pt), slice_obj)])
+
 
     def get_cell_base_model_info(self):
         self.mc_base_models, self.tc_base_models, self.gc_base_models = \
@@ -104,13 +134,17 @@ class SliceBuilderBlender:
         self.gc_base_models = OrderedDict(self.gc_base_models)
 
         self.max_apic_mc_info = self.get_longest_apic_model(self.mc_base_models)
-        self.mc_apic_lengths = [mc["apical_dendrite_reach"] for mc in self.mc_base_models.values()]
+        self.mc_apic_lengths = self.get_apic_lengths(self.mc_base_models)
 
         self.max_apic_tc_info = self.get_longest_apic_model(self.tc_base_models)
-        self.tc_apic_lengths = [tc["apical_dendrite_reach"] for tc in self.tc_base_models.values()]
+        self.tc_apic_lengths = self.get_apic_lengths(self.tc_base_models)
 
         self.max_apic_gc_info = self.get_longest_apic_model(self.gc_base_models)
-        self.gc_apic_lengths = [gc["apical_dendrite_reach"] for gc in self.gc_base_models.values()]
+        self.gc_apic_lengths = self.get_apic_lengths(self.gc_base_models)
+
+    @staticmethod
+    def get_apic_lengths(base_models):
+        return np.array([tc["apical_dendrite_reach"] for tc in base_models.values()])
 
     def prepare_group(self):
         # show each section as blender objects
@@ -163,12 +197,10 @@ class SliceBuilderBlender:
             longer_idxs = np.where(self.mc_apic_lengths > dist_to_closest_glom)[0]
 
             # pick a random mc from this list
-            rand_idx = longer_idxs[random.randrange(len(longer_idxs))]
-            mc_apic_len = self.mc_apic_lengths[rand_idx]
-            mc = list(self.mc_base_models.values())[rand_idx]
+            mc = self.get_random_model(self.mc_base_models, longer_idxs)
 
             # find a glom whose distance is as close to the length of the mc apic
-            matching_glom_idx = np.argmin(np.abs(glom_dists - mc_apic_len))
+            matching_glom_idx = np.argmin(np.abs(glom_dists - mc["apical_dendrite_reach"]))
             matching_glom_loc = self.glom_locs[matching_glom_idx]
 
             base_class = mc["class_name"]
@@ -192,21 +224,21 @@ class SliceBuilderBlender:
             self.get_key_mctc_section_objects(self.mc_base_models, base_class, instance_name)
 
         # Align apical towards the closest glom
-        self.position_orient_mctc(mc_soma,
-                                  mc_apic_start,
-                                  mc_apic_end,
-                                  loc,
-                                  closest_glom_loc,
-                                  apic_glom_loc)
+        self.position_orient_align_mctc(mc_soma,
+                                        mc_apic_start,
+                                        mc_apic_end,
+                                        loc,
+                                        closest_glom_loc,
+                                        apic_glom_loc)
 
 
         # Retain the reoriented cell
         bpy.ops.custom.update_groups_from_view()
 
         # Extend apic to the glom
-        self.extend_apic(mc_apic_start, mc_apic_end, apic_glom_loc)
+        # self.extend_apic(mc_apic_start, mc_apic_end, apic_glom_loc)
 
-        self.align_dends(group, self.inner_opl_object_name)
+        #self.align_dends(group, self.inner_opl_object_name)
 
         self.save_transform(instance_name, group)
 
@@ -234,12 +266,11 @@ class SliceBuilderBlender:
                                    (np.array(self.tc_apic_lengths) - dist_to_closest_glom < 200))[0]
 
             # pick a random tc from this list
-            rand_idx = longer_idxs[random.randrange(len(longer_idxs))]
-            tc_apic_len = self.tc_apic_lengths[rand_idx]
-            tc = list(self.tc_base_models.values())[rand_idx]
+            tc = \
+                self.get_random_model(self.tc_base_models, longer_idxs)
 
             # find a glom whose distance is as close to the length of the tc apic
-            matching_glom_idx = np.argmin(np.abs(glom_dists - tc_apic_len))
+            matching_glom_idx = np.argmin(np.abs(glom_dists - tc["apical_dendrite_reach"]))
             matching_glom_loc = self.glom_locs[matching_glom_idx]
 
             base_class = tc["class_name"]
@@ -263,61 +294,87 @@ class SliceBuilderBlender:
             self.get_key_mctc_section_objects(self.tc_base_models, base_class, instance_name)
 
         # Align apical towards the closest glom
-        self.position_orient_mctc(tc_soma,
-                                  tc_apic_start,
-                                  tc_apic_end,
-                                  tc_loc,
-                                  closest_glom_loc,
-                                  apic_glom_loc)
+        self.position_orient_align_mctc(tc_soma,
+                                        tc_apic_start,
+                                        tc_apic_end,
+                                        tc_loc,
+                                        closest_glom_loc,
+                                        apic_glom_loc)
 
 
         # Retain the reoriented cell
         bpy.ops.custom.update_groups_from_view()
 
         # Extend apic to the glom
-        self.extend_apic(tc_apic_start, tc_apic_end, apic_glom_loc)
+        # self.extend_apic(tc_apic_start, tc_apic_end, apic_glom_loc)
 
-        self.align_dends(group, self.outer_opl_object_name)
+        #self.align_dends(group, self.outer_opl_object_name)
 
         self.save_transform(instance_name, group)
 
-    def add_gc(self, gc_loc):
-        # find the closest glom loc
-        inner_opl_dists = self.dist_to_opl(self.inner_opl_object_name, gc_loc)
-        closest_iopl_idxs = np.argsort(inner_opl_dists)
+    def get_opl_distance_info(self, cell_loc, pts):
+        dists = self.dist_to(pts, cell_loc)
+        closest_idxs = np.argsort(dists)
+        
+        closest_loc = pts[closest_idxs][0]
+        closest_dist = dists[closest_idxs][0]
+        
+        return closest_loc, closest_dist, dists
 
-        closest_glom_loc = self.inner_opl_locs[closest_iopl_idxs][0]
-        dist_to_closest_glom = inner_opl_dists[closest_iopl_idxs][0]
+    @staticmethod
+    def closest_point_on_object(global_pt, mesh_obj):
+        local_pt = mesh_obj.matrix_world.inverted() * Vector(global_pt)
+
+        _, mesh_pt, _, _ = mesh_obj.closest_point_on_mesh(local_pt)
+
+        mesh_pt_global = mesh_obj.matrix_world * mesh_pt
+
+        dist = Vector(global_pt - mesh_pt_global).length
+
+        return np.array(mesh_pt_global), dist
+
+    def add_gc(self, loc):
+
+        # find the closest glom loc - cell will be pointed towards it
+        glom_loc, glom_dist = \
+            self.closest_point_on_object(loc, bpy.data.objects[self.glom_layer_object_name])
+
+        # find the closest inner opl loc - apics must go beyond this
+        closest_iopl_loc, dist_to_iopl = \
+            self.closest_point_on_object(loc, bpy.data.objects[self.inner_opl_object_name])
+
+        # find the closest outer opl loc - apics must stay under this
+        closest_oopl_loc, dist_to_oopl = \
+            self.closest_point_on_object(loc, bpy.data.objects[self.outer_opl_object_name])
 
         longest_apic_reach = self.max_apic_gc_info["apical_dendrite_reach"]
 
-        # Apics are too short - use the longest GC
-        if dist_to_closest_glom > longest_apic_reach:
-            base_class = self.max_apic_gc_info["class_name"]
-            apic_glom_loc = closest_glom_loc
 
-        # Apics are longer than distance
-        else:
-            # get gcs with apics longer than the closest glom,
-            # but no further than ~200 um from glom (Kikuta et. al. 2013)
-            longer_idxs = np.where((self.tc_apic_lengths > dist_to_closest_glom) &
-                                   (np.array(self.tc_apic_lengths) - dist_to_closest_glom < 200))[0]
+        # If apics are longer than distance, find such GC models whose apics are confined to the OPL
+        # Specifically:
+        # Get gcs with apics 30um or more longer than the closest opl
+        # GCs whose dendrites penetrate less than ~this amount into OPL would be
+        # functionally inert (in this model)
+        # AND
+        # the apic does not exceed outer opl + margin
+        min_length = dist_to_iopl + 30
+        max_length = dist_to_oopl + 30
 
-            # pick a random tc from this list
-            rand_idx = longer_idxs[random.randrange(len(longer_idxs))]
-            tc_apic_len = self.tc_apic_lengths[rand_idx]
-            tc = list(self.tc_base_models.values())[rand_idx]
+        matching_idxs = np.where((self.gc_apic_lengths > min_length) &
+                                 (self.gc_apic_lengths < max_length))[0]
 
-            # find a glom whose distance is as close to the length of the tc apic
-            matching_glom_idx = np.argmin(np.abs(inner_opl_dists - tc_apic_len))
-            matching_glom_loc = self.glom_locs[matching_glom_idx]
+        # If no cell can reach IOPL, leave that location blank
+        if len(matching_idxs) == 0:
+            return
 
-            base_class = tc["class_name"]
-            apic_glom_loc = matching_glom_loc
+        # pick a random gc from this list
+        gc = self.get_random_model(self.gc_base_models, matching_idxs)
 
+        base_class = gc["class_name"]
+        apic_opl_loc = closest_iopl_loc
 
-        # Create the selected TC in NRN
-        instance_name = self.neuron.create_cell('TC', base_class)
+        # Create the selected GC in NRN
+        instance_name = self.neuron.create_cell('GC', base_class)
 
         # Get updated list of NRN cells in Blender
         bpy.ops.custom.get_cell_list_from_neuron()
@@ -329,28 +386,24 @@ class SliceBuilderBlender:
         # Import group with the created cell
         bpy.ops.custom.import_selected_groups()
 
-        tc_soma, tc_apic_start, tc_apic_end = \
-            self.get_key_mctc_section_objects(self.tc_base_models, base_class, instance_name)
+        soma, apic_start, apic_end = \
+            self.get_key_mctc_section_objects(self.gc_base_models, base_class, instance_name)
 
-        # Align apical towards the closest glom
-        self.position_orient_mctc(tc_soma,
-                                  tc_apic_start,
-                                  tc_apic_end,
-                                  gc_loc,
-                                  closest_glom_loc,
-                                  apic_glom_loc)
+        # DEBUG aids
+        bpy.data.objects['MCProbe'].location = loc
+        bpy.data.objects['GlomProbe'].location = apic_opl_loc
 
+        self.position_orient_cell(soma, apic_end, loc, apic_opl_loc)
 
         # Retain the reoriented cell
         bpy.ops.custom.update_groups_from_view()
 
-        # Extend apic to the glom
-        self.extend_apic(tc_apic_start, tc_apic_end, apic_glom_loc)
-
-        self.align_dends(group, self.outer_opl_object_name)
-
         self.save_transform(instance_name, group)
 
+    def get_random_model(self, base_models, longer_idxs):
+        rand_idx = longer_idxs[random.randrange(len(longer_idxs))]
+        cell = list(base_models.values())[rand_idx]
+        return cell
 
     def align_dends(self, group, layer_name):
         # Set the layer
@@ -382,8 +435,9 @@ class SliceBuilderBlender:
 
         bpy_objects = bpy.data.objects
         soma = bpy_objects[instance_name]
-        apic_start = bpy_objects[apic_pattern % cell_info["apical_dendrite_start"]]
-        apic_end = bpy_objects[apic_pattern % cell_info["apical_dendrite_end"]]
+
+        apic_start = bpy_objects.get(apic_pattern % cell_info["apical_dendrite_start"])
+        apic_end = bpy_objects.get(apic_pattern % cell_info["apical_dendrite_end"])
 
         return soma, apic_start, apic_end
 
@@ -398,28 +452,43 @@ class SliceBuilderBlender:
     def dist_to_gloms(self, loc):
         return self.dist_to(self.glom_locs, loc)
 
-    def dist_to_opl(self, opl_name, loc):
-        opl = bpy.data.objects[opl_name]
-        opl_pts = fast_get(opl.data.vertices, 'co', 3)
-        return self.dist_to(opl_pts, loc)
-
     @staticmethod
     def dist_to(targets_array, loc):
         return np.sqrt(np.sum(np.square(targets_array - loc), axis=1))
 
     def get_locs_within_slice(self, particle_obj_name, slice_obj_name):
-        particles = bpy.data.objects[particle_obj_name].particle_systems[0].particles
+        particles_obj = bpy.data.objects[particle_obj_name]
+        particles = particles_obj.particle_systems[0].particles
+        particles_wm = particles_obj.matrix_world
         slice_obj = bpy.data.objects[slice_obj_name]
 
-        return np.array([np.array(ptc.location)
-                         for ptc in particles
-                         if self.is_inside(ptc.location, slice_obj)])
+        result = np.array([np.array(particles_wm * ptc.location)
+                           for ptc in particles
+                           if self.is_inside(particles_wm * ptc.location, slice_obj)])
 
-    def is_inside(self, point, obj):
-        _, closest, normal, _ = obj.closest_point_on_mesh(point)
-        p2 = closest - point
-        v = p2.dot(normal)
-        return not (v < 0.0)
+        return result
+
+    @staticmethod
+    def is_inside(target_pt_global, mesh_obj, tolerance=0.05):
+        # Convert the point from global space to mesh local space
+        target_pt_local = mesh_obj.matrix_world.inverted() * target_pt_global
+
+        # Find the nearest point on the mesh and the nearest face normal
+        _, pt_closest, face_normal, _ = mesh_obj.closest_point_on_mesh(target_pt_local)
+
+        # Get the target-closest pt vector
+        target_closest_pt_vec = (pt_closest - target_pt_local).normalized()
+
+        # Compute the dot product = |a||b|*cos(angle)
+        dot_prod = target_closest_pt_vec.dot(face_normal)
+
+        # Get the angle between the normal and the target-closest-pt vector (from the dot prod)
+        angle = acos(min(max(dot_prod, -1), 1)) * 180 / pi
+
+        # Allow for some rounding error
+        inside = angle < 90-tolerance
+
+        return inside
 
     def unparent(self, obj):
         prev_parent = obj.parent
@@ -432,32 +501,14 @@ class SliceBuilderBlender:
         obj.parent = parent
         obj.matrix_parent_inverse = parent.matrix_world.inverted()
 
-    def position_orient_mctc(self, soma, apic_start, apic_end, loc, closest_glom_loc, apic_glom_loc):
+
+    def position_orient_align_mctc(self, soma, apic_start, apic_end, loc, closest_glom_loc, apic_glom_loc):
 
         # DEBUG aids
         bpy.data.objects['MCProbe'].location = loc
         bpy.data.objects['GlomProbe'].location = apic_glom_loc
 
-        # Add random rotation around the apical axis
-        soma.rotation_euler[2] = random.randrange(360) / 180.0 * pi
-
-        # Position the soma
-        soma.location = loc
-
-        # Update child matrices
-        bpy.context.scene.update()
-
-        # Align the soma to be orthogonal to the soma-closest glom vector
-        soma_wmi = soma.matrix_world.inverted()
-        apic_end_loc = Vector(soma_wmi * apic_end.matrix_world * apic_end.location)
-        glom_loc = Vector(soma_wmi * Vector(closest_glom_loc))
-
-        initMW = soma.matrix_world.copy()
-        rotM = apic_end_loc.rotation_difference(glom_loc).to_matrix().to_4x4()
-        soma.matrix_world = initMW * rotM
-
-        # Update child matrices
-        bpy.context.scene.update()
+        self.position_orient_cell(soma, apic_end, loc, closest_glom_loc)
 
         # Temporarily unparent the apic start (location becomes global)
         apic_start_parent = self.unparent(apic_start)
@@ -482,6 +533,28 @@ class SliceBuilderBlender:
         # Reparent the apic end (so it rotates with the start apic)
         self.parent(apic_start, apic_start_parent)
 
+        bpy.context.scene.update()
+
+    def position_orient_cell(self, soma, apic_end, soma_loc, closest_glom_loc):
+        # Add random rotation around the apical axis
+        soma.rotation_euler[2] = random.randrange(360) / 180.0 * pi
+
+        # Position the soma
+        soma.location = soma_loc
+
+        # Update child matrices
+        bpy.context.scene.update()
+
+        # Align the soma to be orthogonal to the soma-closest glom vector
+        soma_wmi = soma.matrix_world.inverted()
+        apic_end_loc = Vector(soma_wmi * apic_end.matrix_world * apic_end.location)
+        glom_loc = Vector(soma_wmi * Vector(closest_glom_loc))
+
+        initMW = soma.matrix_world.copy()
+        rotM = apic_end_loc.rotation_difference(glom_loc).to_matrix().to_4x4()
+        soma.matrix_world = initMW * rotM
+
+        # Update child matrices
         bpy.context.scene.update()
 
     def extend_apic(self, apic_start, apic_end, apic_glom_loc):

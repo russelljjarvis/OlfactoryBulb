@@ -398,6 +398,16 @@ Whats the appraoch to the slice builder?
 		EG: ob > slices > TestSlice 
 
 TODO:
-	MC creation - need apic data in DB and particles
+	TC creation - need apic data in DB and particles DONE
+
+GC positioning:
+	GC dendrites span EPL, MCL, and GCL
+	The relevant points are: the farthest dend
+
+
+TODO:
+	TC/MC apicals - use closest mesh points instead
+	Verify apicals are oriented correctly
+	Consider replacing the dend alignment with simpler method	
 			
 		
