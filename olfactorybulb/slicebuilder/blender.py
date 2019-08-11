@@ -200,8 +200,7 @@ class SliceBuilderBlender:
             mc = self.get_random_model(self.mc_base_models, longer_idxs)
 
             # find a glom whose distance is as close to the length of the mc apic
-            matching_glom_idx = np.argmin(np.abs(glom_dists - mc["apical_dendrite_reach"]))
-            matching_glom_loc = self.glom_locs[matching_glom_idx]
+            matching_glom_loc = self.find_matching_glom(loc, mc)
 
             base_class = mc["class_name"]
             apic_glom_loc = matching_glom_loc
@@ -242,39 +241,32 @@ class SliceBuilderBlender:
 
         self.save_transform(instance_name, group)
 
-    def add_tc(self, tc_loc):
+    def add_tc(self, loc):
 
-        # find the closest glom loc
-        glom_dists = self.dist_to_gloms(tc_loc)
-        closest_glom_idxs = np.argsort(glom_dists)
-
-        closest_glom_loc = self.glom_locs[closest_glom_idxs][0]
-        dist_to_closest_glom = glom_dists[closest_glom_idxs][0]
+        # find the closest glom layer loc - cell will be pointed towards it
+        closest_glom_loc, dist_to_gl = \
+            self.closest_point_on_object(loc, bpy.data.objects[self.glom_layer_object_name])
 
         longest_apic_reach = self.max_apic_tc_info["apical_dendrite_reach"]
 
-        # Apics are too short - use the longest TC
-        if dist_to_closest_glom > longest_apic_reach:
-            base_class = self.max_apic_tc_info["class_name"]
-            apic_glom_loc = closest_glom_loc
+        # Apics are too short - leave that location blank
+        if dist_to_gl > longest_apic_reach:
+            return
 
         # Apics are longer than distance
-        else:
-            # get tcs with apics longer than the closest glom,
-            # but no further than ~200 um from glom (Kikuta et. al. 2013)
-            longer_idxs = np.where((self.tc_apic_lengths > dist_to_closest_glom) &
-                                   (np.array(self.tc_apic_lengths) - dist_to_closest_glom < 200))[0]
+        # get tcs with apics longer than the closest glom,
+        # but no further than ~200 um from glom (Kikuta et. al. 2013)
+        longer_idxs = np.where((self.tc_apic_lengths > dist_to_gl) &
+                               (self.tc_apic_lengths - dist_to_gl < 200))[0]
 
-            # pick a random tc from this list
-            tc = \
-                self.get_random_model(self.tc_base_models, longer_idxs)
+        # pick a random tc from this list
+        tc = self.get_random_model(self.tc_base_models, longer_idxs)
 
-            # find a glom whose distance is as close to the length of the tc apic
-            matching_glom_idx = np.argmin(np.abs(glom_dists - tc["apical_dendrite_reach"]))
-            matching_glom_loc = self.glom_locs[matching_glom_idx]
+        # find a glom whose distance is as close to the length of the tc apic
+        matching_glom_loc = self.find_matching_glom(loc, tc)
 
-            base_class = tc["class_name"]
-            apic_glom_loc = matching_glom_loc
+        base_class = tc["class_name"]
+        apic_glom_loc = matching_glom_loc
 
 
         # Create the selected TC in NRN
@@ -290,14 +282,14 @@ class SliceBuilderBlender:
         # Import group with the created cell
         bpy.ops.custom.import_selected_groups()
 
-        tc_soma, tc_apic_start, tc_apic_end = \
+        soma, apic_start, apic_end = \
             self.get_key_mctc_section_objects(self.tc_base_models, base_class, instance_name)
 
         # Align apical towards the closest glom
-        self.position_orient_align_mctc(tc_soma,
-                                        tc_apic_start,
-                                        tc_apic_end,
-                                        tc_loc,
+        self.position_orient_align_mctc(soma,
+                                        apic_start,
+                                        apic_end,
+                                        loc,
                                         closest_glom_loc,
                                         apic_glom_loc)
 
@@ -311,6 +303,14 @@ class SliceBuilderBlender:
         #self.align_dends(group, self.outer_opl_object_name)
 
         self.save_transform(instance_name, group)
+
+    def find_matching_glom(self, cell_loc, cell_model_info):
+        # Get distances to individual gloms
+        glom_dists = self.dist_to_gloms(cell_loc)
+
+        matching_glom_idx = np.argmin(np.abs(glom_dists - cell_model_info["apical_dendrite_reach"]))
+        matching_glom_loc = self.glom_locs[matching_glom_idx]
+        return matching_glom_loc
 
     def get_opl_distance_info(self, cell_loc, pts):
         dists = self.dist_to(pts, cell_loc)
@@ -566,6 +566,7 @@ class SliceBuilderBlender:
         apic_glom_diff = Vector(glom_loc - apic_end_loc)
 
         apic_start.location = apic_start.location.copy() + apic_glom_diff
+
 
 
 bpy.app.handlers.scene_update_post.append(auto_start)
