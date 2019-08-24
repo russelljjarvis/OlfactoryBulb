@@ -11,7 +11,14 @@ from math import pi, acos
 sys.path.append(os.getcwd())
 from olfactorybulb import slices
 from blenderneuron.blender.utils import fast_get
+from blenderneuron.blender.views.vectorconfinerview import VectorConfinerView
+from blenderneuron.blender.views.synapseformerview import SynapseFormerView
 
+'''
+Sources:
+Kikuta et. al. 2013 - TC soma distance from Glom center ~200 um
+Witman and Greer 2007 - GC spine reach - from digitized figure 5.5 um
+'''
 
 def auto_start(scene):
     # Remove auto-execute command after starting
@@ -23,7 +30,21 @@ def auto_start(scene):
     # Create a slice builder class
     sbb = bpy.types.Object.SliceBuilder = SliceBuilderBlender()
 
+
+
+    # from line_profiler import LineProfiler
+    # lp = LineProfiler()
+    # lp.add_function(sbb.add_mc)
+    # lp.add_function(sbb.add_tc)
+    # lp.add_function(sbb.add_gc)
+    # lp.add_function(sbb.confine_dends)
+    # lp.add_function(VectorConfinerView.confine_between_meshes)
+    # profiled_build = lp(sbb.build)
+    # profiled_build()
+    # lp.print_stats()
+
     sbb.build()
+
 
 
 class SliceBuilderBlender:
@@ -42,7 +63,7 @@ class SliceBuilderBlender:
 
     def __init__(self,
                  slice_object_name='TestSlice',
-                 max_mcs=5, max_tcs=5, max_gcs=5,
+                 max_mcs=1, max_tcs=1, max_gcs=1,
                  mc_particles_object_name='2 ML Particles',
                  tc_particles_object_name='1 OPL Particles',
                  gc_particles_object_name='4 GRL Particles',
@@ -74,10 +95,50 @@ class SliceBuilderBlender:
         self.get_cell_base_model_info()
 
         # Show as section objects
-        self.prepare_group()
+        self.prepare_groups()
+
+        # Add synapse sets
+        self.add_synapse_sets()
 
         # Clear slice files
         self.clear_slice_files()
+
+        self.max_alignment_angle = 80
+
+    def add_synapse_sets(self):
+        # Delete the default set
+        self.node.synapse_sets.remove(0)
+
+        self.create_synapse_set('GCs', 'MCs')
+        self.create_synapse_set('GCs', 'TCs')
+
+    def create_synapse_set(self, group_from = 'GCs', group_to = 'MCs'):
+
+        new_set = self.node.add_synapse_set(group_from + '->' + group_to)
+        new_set.group_source = group_from
+        new_set.group_dest = group_to
+
+        new_set.max_distance = 5
+        new_set.use_radius = True
+        new_set.max_syns_per_pt = 1
+        new_set.section_pattern_source = "*apic*"
+        new_set.section_pattern_dest = "*dend*"
+        new_set.synapse_name_dest = 'GabaSyn'
+        new_set.synapse_params_dest = str({
+            'gmax': 0.005,  # uS,
+            'tau1': 1,  # ms
+            'tau2': 100  # ms
+        })
+        new_set.is_reciprocal = True
+        new_set.synapse_name_source = 'AmpaNmdaSyn'
+        new_set.synapse_params_source = str({'gmax': 0.1})
+        new_set.create_spines = True
+        new_set.spine_neck_diameter = 0.2
+        new_set.spine_head_diameter = 1
+        new_set.spine_name_prefix = 'Spine'
+        new_set.conduction_velocity = 1
+        new_set.initial_weight = 1
+        new_set.threshold = 0
 
     def clear_slice_files(self):
         dir = self.slice_dir
@@ -147,16 +208,18 @@ class SliceBuilderBlender:
     def get_apic_lengths(base_models):
         return np.array([tc["apical_dendrite_reach"] for tc in base_models.values()])
 
-    def prepare_group(self):
-        # show each section as blender objects
-        group = self.node.groups.get('Group.000')
+    def prepare_groups(self):
+        # Remove the default group
+        self.node.groups['Group.000'].remove()
 
-        if group is None:
-            group = self.node.add_group()
+        # Create empty cell groups
+        groups = [self.node.add_group(name, False) for name in ['MCs', 'TCs', 'GCs']]
 
-        group.interaction_granularity = 'Section'
-        group.recording_granularity = 'Cell'
-        group.record_activity = False
+        # show each section as blender objects - necessary for dend alignment
+        for group in groups:
+            group.interaction_granularity = 'Section'
+            group.recording_granularity = 'Cell'
+            group.record_activity = False
 
     def globalize_slice(self):
         # Apply all/any transformations to the slice
@@ -167,7 +230,6 @@ class SliceBuilderBlender:
         slice.select = False
 
     def build(self, seed=0):
-
         random.seed(seed)
 
         for loc in self.mc_locs:
@@ -178,6 +240,14 @@ class SliceBuilderBlender:
 
         for loc in self.gc_locs:
             self.add_gc(loc)
+
+        # Select all cells in groups
+        self.node.groups['MCs'].select_roots('Pattern','MC*')
+        self.node.groups['TCs'].select_roots('Pattern','TC*')
+        self.node.groups['GCs'].select_roots('Pattern','GC*')
+
+        # Show all group cells
+        bpy.ops.blenderneuron.display_groups()
 
     def add_mc(self, loc):
 
@@ -207,7 +277,7 @@ class SliceBuilderBlender:
         instance_name = self.neuron.create_cell('MC', base_class)
 
         # Import it into Blender
-        self.import_instance(instance_name)
+        self.import_instance(instance_name, 'MCs')
 
         mc_soma, mc_apic_start, mc_apic_end = \
             self.get_key_mctc_section_objects(self.mc_base_models, base_class, instance_name)
@@ -224,25 +294,27 @@ class SliceBuilderBlender:
         bpy.ops.blenderneuron.update_groups_with_view_data()
 
         self.confine_dends(
+            'MCs',
             self.inner_opl_object_name,
             self.outer_opl_object_name,
-            max_angle=65,
+            max_angle=self.max_alignment_angle,
             height_start=0,
             height_end=0.6
         )
 
-        self.save_transform(instance_name)
+        self.save_transform('MCs', instance_name)
 
-    def import_instance(self, instance_name):
+    def import_instance(self, instance_name, group_name):
         # Get updated list of NRN cells in Blender
         bpy.ops.blenderneuron.get_cell_list_from_neuron()
 
         # Select the created instance
-        group = self.node.groups['Group.000']
+        group = self.node.groups[group_name]
         group.include_roots_by_name([instance_name], exclude_others=True)
 
-        # Import group with the created cell
-        bpy.ops.blenderneuron.import_groups()
+        # Import group with the created cell and show it
+        group.import_group()
+        group.show()
 
     def add_tc(self, loc):
 
@@ -258,7 +330,7 @@ class SliceBuilderBlender:
 
         # Apics are longer than distance
         # get tcs with apics longer than the closest glom,
-        # but no further than ~200 um from glom (Kikuta et. al. 2013)
+        # but no further than ~200 um from glom (Source: Kikuta et. al. 2013)
         longer_idxs = np.where((self.tc_apic_lengths > dist_to_gl) &
                                (self.tc_apic_lengths - dist_to_gl < 200))[0]
 
@@ -275,7 +347,7 @@ class SliceBuilderBlender:
         instance_name = self.neuron.create_cell('TC', base_class)
 
         # Import it into Blender
-        self.import_instance(instance_name)
+        self.import_instance(instance_name, 'TCs')
 
         soma, apic_start, apic_end = \
             self.get_key_mctc_section_objects(self.tc_base_models, base_class, instance_name)
@@ -292,14 +364,15 @@ class SliceBuilderBlender:
         bpy.ops.blenderneuron.update_groups_with_view_data()
 
         self.confine_dends(
+            'TCs',
             self.inner_opl_object_name,
             self.outer_opl_object_name,
-            max_angle=65,
+            max_angle=self.max_alignment_angle,
             height_start=0.4,
             height_end=1.0
         )
 
-        self.save_transform(instance_name)
+        self.save_transform('TCs', instance_name)
 
     def find_matching_glom(self, cell_loc, cell_model_info):
         # Get distances to individual gloms
@@ -373,39 +446,40 @@ class SliceBuilderBlender:
         instance_name = self.neuron.create_cell('GC', base_class)
 
         # Import it into Blender
-        self.import_instance(instance_name)
+        self.import_instance(instance_name, 'GCs')
 
         soma, apic_start, apic_end = \
             self.get_key_mctc_section_objects(self.gc_base_models, base_class, instance_name)
 
         # DEBUG aids
         bpy.data.objects['ProbeSoma'].location = loc
+        bpy.data.objects['ProbeSoma'].hide = True
         bpy.data.objects['ProbeApicLoc'].location = apic_opl_loc
+        bpy.data.objects['ProbeApicLoc'].hide = True
 
         self.position_orient_cell(soma, apic_end, loc, apic_opl_loc)
 
         # Retain the reoriented cell
         bpy.ops.blenderneuron.update_groups_with_view_data()
 
-        self.save_transform(instance_name)
+        self.save_transform('GCs', instance_name)
 
     def get_random_model(self, base_models, longer_idxs):
         rand_idx = longer_idxs[random.randrange(len(longer_idxs))]
         cell = list(base_models.values())[rand_idx]
         return cell
 
-    def confine_dends(self, start_layer_name, end_layer_name, max_angle, height_start, height_end):
-
-        group = self.node.groups['Group.000']
+    def confine_dends(self, group_name, start_layer_name, end_layer_name, max_angle, height_start, height_end):
+        group = self.node.groups[group_name]
 
         # Set the layers
         group.set_confiner_layers(start_layer_name, end_layer_name, max_angle, height_start, height_end)
         group.setup_confiner()
         group.confine_between_layers()
 
-    def save_transform(self, instance_name):
+    def save_transform(self, group_name, instance_name):
 
-        group = self.node.groups['Group.000']
+        group = self.node.groups[group_name]
 
         # Make instance name a valid python module name (eg: MC1[0].soma -> MC1_0.py)
         file_name = instance_name \
@@ -555,6 +629,8 @@ class SliceBuilderBlender:
         apic_glom_diff = Vector(glom_loc - apic_end_loc)
 
         apic_start.location = apic_start.location.copy() + apic_glom_diff
+
+
 
 
 bpy.app.handlers.scene_update_post.append(auto_start)

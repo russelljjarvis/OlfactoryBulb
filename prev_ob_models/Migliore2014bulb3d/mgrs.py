@@ -102,7 +102,11 @@ class MGRS:
       self.fi.gmax = params.inh_gmax
       self.fi.tau1 = params.fi_tau1
       self.fi.tau2 = params.fi_tau2
+
+      # Assigns MC gid to this host
       pc.set_gid2node(self.md_gid, pc.id())
+
+      # Give the netcon triggered by threshdetect the MC gid
       pc.cell(self.md_gid, h.NetCon(self.md, None), 1)
 
     if self.gpriden:
@@ -111,7 +115,11 @@ class MGRS:
       self.gd = h.ThreshDetect(self.spine.head(0.5))
       self.ampanmda = h.AmpaNmda(self.spine.head(0.5))
       self.ampanmda.gmax = params.exc_gmax
+
+      # Assign GC gid to this hose
       pc.set_gid2node(self.gd_gid, pc.id())
+
+      # Give the GC gid to the spine head ThreshDected netcon
       pc.cell(self.gd_gid, h.NetCon(self.gd, None), 1)
 
     # Cannot be done above because output ports must exist prior to using 

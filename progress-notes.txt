@@ -406,8 +406,41 @@ GC positioning:
 
 
 TODO:
-	TC/MC apicals - use closest mesh points instead
-	Verify apicals are oriented correctly
-	Consider replacing the dend alignment with simpler method	
+	TC/MC apicals - use closest mesh points instead DONE
+	Verify apicals are oriented correctly DONE
+	Consider replacing the dend alignment with simpler method DONE	
+
+	Investigate issue with DONE
+		MC4 dend[19] and 
+		dend[6] - it is a child of [5], but at the beginning of [5] not at the end DONE
+
+	Bug: cell has been split, unselcted from group, then group view does not unsplit it DONE
+		im removing root from view group before the root's view has been removed
+		maybe on unselecting a root, i need to remove the view then?
 			
+
+
+TODO:
+	all cells positioning verified DONE
+	synapses and input
+	visualization? blender materials vs cycles materials. compositing glare. UI for animation properties - color vs emit
+	UI for other settings - curve properties, material color properties, look at others, frames per ms
+	All constants to settings file
+
+	synapses:
+		there are syns between MCs and GCs - reciprocal
+		Also between TCs and GCs
+		Questions are: how are they distributed, how many of them, whats the basic process?
+			syns are in the EPL layer, where the GC and TMC dends are in close proximity
+			how would i find these spots?
+				im looking for places where gc dends are close to MCTC dends
+					for a given GC, find all MCTCs that are within D distance from GC mesh
+						need to know which section/compartment are nearby each other KDTree DONE
+	
+	Handle when multiple points are nearby each other that are near the cell DONE
+		insert pairs of points based on distance into a heap, then pop all and use a dict to keep track of taken points
+
+TODO:
+	finish the panel for synapse formation DONE
+	add operator to create the synapses DONE
 		
