@@ -444,3 +444,22 @@ TODO:
 	finish the panel for synapse formation DONE
 	add operator to create the synapses DONE
 		
+
+Activity import:
+	Cycles view -> nodes
+	Blender view -> classic emit property
+
+Inputs
+	Mig mcs are positioned to be centered around gloms from Vincis
+	The only place where glom positions are implicitly stored are MC tuftdends
+	I can get the glom locs by instantiating MCs and getting the glom loc from TDs
+
+	Question is what do i do with the MIG glom locations?
+	I need to map them onto my glom layer mesh
+	We do have a scale bar in Mig Fig 1B
+	Once I have the locs, I can import them to the allen GL mesh and look at their alignment
+
+	The Allen GL and MIG Glom locs can be aligned almost perfectly
+	Generated 1915 gloms within the allen GL using the blue noise addon
+	Next is to assign the Mig glom index to the closest glom in allen GL
+	
