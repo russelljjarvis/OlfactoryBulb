@@ -56,7 +56,7 @@ class CellModel(BaseModel):
         primary_key = False
 
 class Glomerulus(BaseModel):
-    radius = FloatField()
+    rowid = IntegerField(primary_key=True)
     x = FloatField()
     y = FloatField()
     z = FloatField()
@@ -116,6 +116,23 @@ class Measurement(BaseModel):
     class Meta:
         table_name = 'measurement'
         primary_key = False
+
+class Odor(BaseModel):
+    rowid = IntegerField(primary_key=True)
+    name = TextField(unique=True)
+
+    class Meta:
+        table_name = 'odor'
+
+class OdorGlom(BaseModel):
+    rowid = IntegerField(primary_key=True)
+    glom = ForeignKeyField(column_name='glom_id', field='rowid', model=Glomerulus)
+    odor = ForeignKeyField(column_name='odor_id', field='rowid', model=Odor)
+
+    intensity = FloatField()
+
+    class Meta:
+        table_name = 'odor_glom'
 
 class SqliteSequence(BaseModel):
     name = UnknownField(null=True)  # 

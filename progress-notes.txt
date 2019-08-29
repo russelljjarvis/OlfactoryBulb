@@ -462,4 +462,48 @@ Inputs
 	The Allen GL and MIG Glom locs can be aligned almost perfectly
 	Generated 1915 gloms within the allen GL using the blue noise addon
 	Next is to assign the Mig glom index to the closest glom in allen GL
+
+	the MIG gloms are a subset of all the gloms. i.e. some gloms get no imput
+	those gloms dont have any mcs attached to them
+	that saves on cells that are inactive
+	but it seems weird to build a model based on the gloms that will be activated
+
+	here we're building the model on slices, so whatever gloms fall within the slice, then 
+	cells should be attached to them
+	
+	some of the gloms will not be activated, and those cells could be disabled, skipped
+
+	the more general issue is to enable presentation of odors as images
+	and be able to investigate the alteration of odor image information as it leaves the MCs or TCs
+	as well as the differences between MC and TC afterimages
+
+	another issue is the unwrapping of the surface
+	would like to visualize the odor inputs as 2D images and same with the outputs
+	each glom is a pixel, want to project them to a flat 2D space, similar to Johnson 2DG odor maps
+	essentially i want to be able to visually edit the odor inputs by drawing a visual map
+		the gloms need to be unwrapped to a 2D image, where I can control the intensity
+		one 
+
+	enable a way to build the network based on selected odors
+	store glomeruli indices in DB (can later store flatened mappings too)
+		store odors and the gloms they activate in db too
+		then to build a network, select a set of odors
+		can also still use the slice meshes to select a subset
+	how can textture unwrapping be used here?
+		it maps vertices of a mesh onto points on a 2d plane
+		there is a script that will turn a uv map into a mesh
+	
+	i have a mapping between migliore glom ids to my glom ids
+	need to store the odor info, each odor stims mig gloms DONE
+	
+Network with inputs
+	need to store which gloms mcs and tcs are connected to
+	then arrange for an input sequence
+
+TODO: confiner needs to be re-visited, the angles are off - possibly a lower length limit is needed, or debug aids
+
+Slice Builder: need to save synaptic data
+
+Slice initializer: once the slice is built, the initializer should be used to study it: supply inputs, measure outputs
+	
 	
