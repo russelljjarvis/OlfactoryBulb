@@ -1,0 +1,271 @@
+{
+  "name": "GCs__MCs",
+  "entries": [
+    {
+      "neck_end": [
+        435.6572570800781,
+        1429.5264892578125,
+        118.13284301757812
+      ],
+      "is_reciprocal": true,
+      "dest_pt_idx": 43,
+      "weight": 1.0,
+      "source_syn": "AmpaNmdaSyn",
+      "create_spine": true,
+      "source_section": "GC2[0].apic[2]",
+      "dest_syn": "GabaSyn",
+      "dest_syn_params": "{'gmax': 0.005, 'tau1': 1, 'tau2': 100}",
+      "threshold": 0.0,
+      "head_end": [
+        436.3126525878906,
+        1429.6612548828125,
+        118.87600708007812
+      ],
+      "prefix": "Spine",
+      "head_diameter": 1.0,
+      "dest_section": "MC4[0].dend[5]",
+      "source_syn_params": "{'gmax': 0.1}",
+      "neck_start": [
+        414.6097717285156,
+        1425.1983642578125,
+        94.26654052734375
+      ],
+      "head_start": [
+        435.6572570800781,
+        1429.5264892578125,
+        118.13284301757812
+      ],
+      "neck_diameter": 0.20000000298023224,
+      "delay": 0.033114320486783984,
+      "source_pt_idx": 59
+    },
+    {
+      "neck_end": [
+        435.4555358886719,
+        1435.8302001953125,
+        117.88693237304688
+      ],
+      "is_reciprocal": true,
+      "dest_pt_idx": 44,
+      "weight": 1.0,
+      "source_syn": "AmpaNmdaSyn",
+      "create_spine": true,
+      "source_section": "GC2[0].apic[2]",
+      "dest_syn": "GabaSyn",
+      "dest_syn_params": "{'gmax': 0.005, 'tau1': 1, 'tau2': 100}",
+      "threshold": 0.0,
+      "head_end": [
+        436.0828552246094,
+        1436.1484375,
+        118.59774017333984
+      ],
+      "prefix": "Spine",
+      "head_diameter": 1.0,
+      "dest_section": "MC4[0].dend[5]",
+      "source_syn_params": "{'gmax': 0.1}",
+      "neck_start": [
+        414.6014709472656,
+        1425.2525634765625,
+        94.25696563720703
+      ],
+      "head_start": [
+        435.4555358886719,
+        1435.8302001953125,
+        117.88693237304688
+      ],
+      "neck_diameter": 0.20000000298023224,
+      "delay": 0.0342438904941082,
+      "source_pt_idx": 59
+    },
+    {
+      "neck_end": [
+        435.63873291015625,
+        1429.5438232421875,
+        118.1463623046875
+      ],
+      "is_reciprocal": true,
+      "dest_pt_idx": 43,
+      "weight": 1.0,
+      "source_syn": "AmpaNmdaSyn",
+      "create_spine": true,
+      "source_section": "GC2[0].apic[2]",
+      "dest_syn": "GabaSyn",
+      "dest_syn_params": "{'gmax': 0.005, 'tau1': 1, 'tau2': 100}",
+      "threshold": 0.0,
+      "head_end": [
+        436.3056640625,
+        1429.667724609375,
+        118.88111114501953
+      ],
+      "prefix": "Spine",
+      "head_diameter": 1.0,
+      "dest_section": "MC4[0].dend[5]",
+      "source_syn_params": "{'gmax': 0.1}",
+      "neck_start": [
+        413.34100341796875,
+        1425.4002685546875,
+        93.58075714111328
+      ],
+      "head_start": [
+        435.63873291015625,
+        1429.5438232421875,
+        118.1463623046875
+      ],
+      "neck_diameter": 0.20000000298023224,
+      "delay": 0.03443392726778984,
+      "source_pt_idx": 58
+    },
+    {
+      "neck_end": [
+        435.4333801269531,
+        1435.856689453125,
+        117.89527893066406
+      ],
+      "is_reciprocal": true,
+      "dest_pt_idx": 44,
+      "weight": 1.0,
+      "source_syn": "AmpaNmdaSyn",
+      "create_spine": true,
+      "source_section": "GC2[0].apic[2]",
+      "dest_syn": "GabaSyn",
+      "dest_syn_params": "{'gmax': 0.005, 'tau1': 1, 'tau2': 100}",
+      "threshold": 0.0,
+      "head_end": [
+        436.0744934082031,
+        1436.158447265625,
+        118.60089111328125
+      ],
+      "prefix": "Spine",
+      "head_diameter": 1.0,
+      "dest_section": "MC4[0].dend[5]",
+      "source_syn_params": "{'gmax': 0.1}",
+      "neck_start": [
+        413.3333740234375,
+        1425.4530029296875,
+        93.57212829589844
+      ],
+      "head_start": [
+        435.4333801269531,
+        1435.856689453125,
+        117.89527893066406
+      ],
+      "neck_diameter": 0.20000000298023224,
+      "delay": 0.03547117778658867,
+      "source_pt_idx": 58
+    },
+    {
+      "neck_end": [
+        435.61376953125,
+        1440.606689453125,
+        115.56179809570312
+      ],
+      "is_reciprocal": true,
+      "dest_pt_idx": 45,
+      "weight": 1.0,
+      "source_syn": "AmpaNmdaSyn",
+      "create_spine": true,
+      "source_section": "GC2[0].apic[2]",
+      "dest_syn": "GabaSyn",
+      "dest_syn_params": "{'gmax': 0.005, 'tau1': 1, 'tau2': 100}",
+      "threshold": 0.0,
+      "head_end": [
+        436.2731018066406,
+        1441.0155029296875,
+        116.19281005859375
+      ],
+      "prefix": "Spine",
+      "head_diameter": 1.0,
+      "dest_section": "MC4[0].dend[5]",
+      "source_syn_params": "{'gmax': 0.1}",
+      "neck_start": [
+        411.32012939453125,
+        1425.54443359375,
+        92.31161499023438
+      ],
+      "head_start": [
+        435.61376953125,
+        1440.606689453125,
+        115.56179809570312
+      ],
+      "neck_diameter": 0.20000000298023224,
+      "delay": 0.03784596034884453,
+      "source_pt_idx": 57
+    },
+    {
+      "neck_end": [
+        435.23431396484375,
+        1424.0908203125,
+        121.16646575927734
+      ],
+      "is_reciprocal": true,
+      "dest_pt_idx": 42,
+      "weight": 1.0,
+      "source_syn": "AmpaNmdaSyn",
+      "create_spine": true,
+      "source_section": "GC2[0].apic[2]",
+      "dest_syn": "GabaSyn",
+      "dest_syn_params": "{'gmax': 0.005, 'tau1': 1, 'tau2': 100}",
+      "threshold": 0.0,
+      "head_end": [
+        435.8726501464844,
+        1424.0555419921875,
+        121.93540954589844
+      ],
+      "prefix": "Spine",
+      "head_diameter": 1.0,
+      "dest_section": "MC4[0].dend[5]",
+      "source_syn_params": "{'gmax': 0.1}",
+      "neck_start": [
+        411.3139343261719,
+        1425.4129638671875,
+        92.3524398803711
+      ],
+      "head_start": [
+        435.23431396484375,
+        1424.0908203125,
+        121.16646575927734
+      ],
+      "neck_diameter": 0.20000000298023224,
+      "delay": 0.03847240230441094,
+      "source_pt_idx": 57
+    },
+    {
+      "neck_end": [
+        435.5893249511719,
+        1440.6373291015625,
+        115.56834411621094
+      ],
+      "is_reciprocal": true,
+      "dest_pt_idx": 45,
+      "weight": 1.0,
+      "source_syn": "AmpaNmdaSyn",
+      "create_spine": true,
+      "source_section": "GC2[0].apic[2]",
+      "dest_syn": "GabaSyn",
+      "dest_syn_params": "{'gmax': 0.005, 'tau1': 1, 'tau2': 100}",
+      "threshold": 0.0,
+      "head_end": [
+        436.2638854980469,
+        1441.027099609375,
+        116.19528198242188
+      ],
+      "prefix": "Spine",
+      "head_diameter": 1.0,
+      "dest_section": "MC4[0].dend[5]",
+      "source_syn_params": "{'gmax': 0.1}",
+      "neck_start": [
+        409.3553466796875,
+        1425.4776611328125,
+        91.18595886230469
+      ],
+      "head_start": [
+        435.5893249511719,
+        1440.6373291015625,
+        115.56834411621094
+      ],
+      "neck_diameter": 0.20000000298023224,
+      "delay": 0.0398913399875164,
+      "source_pt_idx": 56
+    }
+  ]
+}

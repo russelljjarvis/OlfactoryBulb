@@ -7,10 +7,10 @@ from collections import OrderedDict
 from mathutils import Vector
 import random
 from math import pi, acos
-
+import json
 sys.path.append(os.getcwd())
 from olfactorybulb import slices
-from blenderneuron.blender.utils import fast_get
+from blenderneuron.blender.utils import fast_get, make_safe_filename
 from blenderneuron.blender.views.vectorconfinerview import VectorConfinerView
 from blenderneuron.blender.views.synapseformerview import SynapseFormerView
 
@@ -72,6 +72,7 @@ class SliceBuilderBlender:
                  inner_opl_object_name='1 OPL-Inner'):
 
         self.odors = odors
+        self.glom_cells = {}
 
         self.slice_name = slice_object_name
 
@@ -121,6 +122,19 @@ class SliceBuilderBlender:
         self.node.groups['TCs'].select_roots('Pattern','TC*')
         self.node.groups['GCs'].select_roots('Pattern','GC*')
 
+        # Save all cells
+        for group in self.node.groups.values():
+            group.to_file(os.path.join(self.slice_dir, make_safe_filename(group.name)+'.json'))
+
+        # Save glom-cell associations
+        with open(os.path.join(self.slice_dir, 'glom_cells.json'), 'w') as f:
+            json.dump(self.glom_cells, f)
+
+        # Find and save syns in all synapse sets
+        for syn_set in self.node.synapse_sets:
+            syn_set.get_synapse_locations()
+            syn_set.save_synapses(os.path.join(self.slice_dir, make_safe_filename(syn_set.name)+'.json'))
+
         # Show all group cells
         bpy.ops.blenderneuron.display_groups()
 
@@ -137,7 +151,7 @@ class SliceBuilderBlender:
         new_set.group_source = group_from
         new_set.group_dest = group_to
 
-        new_set.max_distance = 5
+        new_set.max_distance = 40 # 5
         new_set.use_radius = True
         new_set.max_syns_per_pt = 1
         new_set.section_pattern_source = "*apic*"
@@ -162,8 +176,8 @@ class SliceBuilderBlender:
     def clear_slice_files(self):
         dir = self.slice_dir
 
-        # Match e.g. 'MC1_21.py'
-        pattern = re.compile('.C.+_.+py')
+        # Match e.g. 'MCs.json'
+        pattern = re.compile('.+json')
 
         for file in os.listdir(dir):
             if pattern.match(file) is not None:
@@ -240,8 +254,9 @@ class SliceBuilderBlender:
             group.recording_granularity = 'Cell'
             group.record_activity = False
 
-        group[1].default_color = [1, 0, 0]
-        group[2].default_color = [0, 0, 1]
+        # Add some color
+        groups[1].default_color = [1, 0, 0]
+        groups[2].default_color = [0, 0, 1]
 
     def globalize_slice(self):
         # Apply all/any transformations to the slice
@@ -270,7 +285,7 @@ class SliceBuilderBlender:
         mc = self.get_random_model(self.mc_base_models, longer_idxs)
 
         # find a glom whose distance is as close to the length of the mc apic
-        matching_glom_loc = self.find_matching_glom(mc_pt['loc'], mc)
+        matching_glom_loc, matching_glom_id = self.find_matching_glom(mc_pt['loc'], mc)
 
         base_class = mc["class_name"]
         apic_glom_loc = matching_glom_loc
@@ -278,7 +293,10 @@ class SliceBuilderBlender:
         # Create the selected MC in NRN
         instance_name = self.neuron.create_cell('MC', base_class)
 
-        # Import it into Blender
+        # Associate the cell with the glomerulus
+        self.link_cell_to_glom(instance_name, matching_glom_id)
+
+        # Import cell into Blender
         self.import_instance(instance_name, 'MCs')
 
         mc_soma, mc_apic_start, mc_apic_end = \
@@ -305,6 +323,13 @@ class SliceBuilderBlender:
         # )
         #
         # self.save_transform('MCs', instance_name)
+
+    def link_cell_to_glom(self, instance_name, matching_glom_id):
+        glom_cells = self.glom_cells.get(matching_glom_id, [])
+
+        glom_cells.append(instance_name.replace('.soma',''))
+
+        self.glom_cells[matching_glom_id] = glom_cells
 
     def import_instance(self, instance_name, group_name):
         # Get updated list of NRN cells in Blender
@@ -340,13 +365,16 @@ class SliceBuilderBlender:
         tc = self.get_random_model(self.tc_base_models, longer_idxs)
 
         # find a glom whose distance is as close to the length of the tc apic
-        matching_glom_loc = self.find_matching_glom(tc_pt['loc'], tc)
+        matching_glom_loc, matching_glom_id = self.find_matching_glom(tc_pt['loc'], tc)
 
         base_class = tc["class_name"]
         apic_glom_loc = matching_glom_loc
 
         # Create the selected TC in NRN
         instance_name = self.neuron.create_cell('TC', base_class)
+
+        # Associate the cell with the glomerulus
+        self.link_cell_to_glom(instance_name, matching_glom_id)
 
         # Import it into Blender
         self.import_instance(instance_name, 'TCs')
@@ -374,15 +402,18 @@ class SliceBuilderBlender:
             height_end=1.0
         )
 
-        self.save_transform('TCs', instance_name)
+        bpy.ops.blenderneuron.update_groups_with_view_data()
+
+        #self.save_transform('TCs', instance_name)
 
     def find_matching_glom(self, cell_loc, cell_model_info):
         # Get distances to individual gloms
         glom_dists = self.dist_to_gloms(cell_loc)
 
         matching_glom_idx = np.argmin(np.abs(glom_dists - cell_model_info["apical_dendrite_reach"]))
-        matching_glom_loc = self.glom_locs[matching_glom_idx]['loc']
-        return matching_glom_loc
+        matching_glom = self.glom_locs[matching_glom_idx]
+
+        return matching_glom['loc'], matching_glom['id']
 
     def get_opl_distance_info(self, cell_loc, pts):
         dists = self.dist_to(pts, cell_loc)
@@ -458,7 +489,7 @@ class SliceBuilderBlender:
         # Retain the reoriented cell
         bpy.ops.blenderneuron.update_groups_with_view_data()
 
-        self.save_transform('GCs', instance_name)
+        #self.save_transform('GCs', instance_name)
 
     def get_random_model(self, base_models, longer_idxs):
         rand_idx = longer_idxs[random.randrange(len(longer_idxs))]

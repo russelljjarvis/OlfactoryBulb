@@ -50,6 +50,7 @@ class CellModel(BaseModel):
     apical_dendrite_start = IntegerField(null=True)
     apical_dendrite_end = IntegerField(null=True)
     apical_dendrite_reach = FloatField(null=True)
+    tufted_dend_root = TextField(null=True)
 
     class Meta:
         table_name = 'cell_model'

@@ -1,318 +1,135 @@
-import cmd
-
-from database import *
-from threading import Thread
-
-from olfactorybulb.blenderprocess import Blender
-from prev_ob_models.Birgiolas2020.isolated_cells import *;
-from olfactorybulb.database import CellModel
+import os
+import json
+from prev_ob_models.Birgiolas2020.isolated_cells import *
+from blenderneuron.nrn.neuronnode import NeuronNode
+from database import Odor, OdorGlom, CellModel
+from math import pow
 
 class OlfactoryBulb:
+    def __init__(self, slice_name):
+        self.slice_dir = os.path.abspath(os.path.join('olfactorybulb', 'slices', slice_name))
+        self.cells = {}
+        self.inputs = []
+        self.bn_server = NeuronNode()
 
-    def __init__(self):
-        self.mcs = []
+        for cell_type in ['MC', 'GC', 'TC']:
+            self.load_cells(cell_type)
 
-        return
+        for synapse_set in ['GCs__MCs', 'GCs__TCs']:
+            self.load_synapse_set(synapse_set)
 
-        from netpyne import specs as netpyne_specs, sim as netpyne_sim
+        # Load glom->cell links
+        self.load_glom_cells()
 
-        # Load parameters
+        from neuron import h
+        self.h = h
 
-        # import pydevd
-        # pydevd.settrace('192.168.0.34', port=4200, stdoutToServer=True, stderrToServer=True)
+        # DEBUG - set syn weights to instant APs
+        [setattr(s, 'gmax', 1E2) for s in h.AmpaNmdaSyn]
+        [setattr(s, 'gmax', 1E2) for s in h.GabaSyn]
 
-        self.properties = {param.name: eval(param.value) for param in Property.select()}
+        self.add_inputs(odor='Apple', t=20, rel_conc=1.0)
 
-        # Load layers
-        self.layers = {layer.id: layer for layer in Layer.select()}
+        h.tstop = 50
 
-        # Load layer vertices
-        self.verts = list(LayerVertex.select())
+    def add_inputs(self, odor='Apple', t=20, rel_conc=1.0):
 
-        # Load glom positions
-        self.glomeruli = list(Glomerulus.select().where(self.within_modeled_region(Glomerulus)))
+        # Get all the different cell models used in the slice
+        input_models = set()
+        for cells in self.glom_cells.values():
+            for cell in cells:
+                input_models.add(cell[:cell.find('[')])
 
-        # Load cell types
-        self.cell_types = {type.id: type for type in CellType.select()}
+        # Get each model's input segments (in the tuft)
+        model_inputsegs = { m.class_name: m.tufted_dend_root
+                           for m in CellModel \
+                                .select(CellModel.class_name, CellModel.tufted_dend_root) \
+                                .where(CellModel.class_name.in_(list(input_models)))}
 
-        # Load cell positions
-        self.cells = list(Cell.select().where(self.within_modeled_region(Cell)))
+        # Get input odor glomeruli
+        glom_intensities = {g.glom_id: g.intensity \
+                                for g in OdorGlom \
+                                .select(OdorGlom.glom_id, OdorGlom.intensity) \
+                                .join(Odor) \
+                                .where(Odor.name == odor)}
 
-        self.lfp_electrodes = list(LfpElectrode.select())
+        for glom_id, cells in self.glom_cells.items():
+            glom_id = int(glom_id)
+            input_segs = ['h.' + cell + '.' + model_inputsegs[cell[:cell.find('[')]] for cell in cells]
+            intensity = glom_intensities[glom_id] * rel_conc
+            self.stim_glom_segments(t, input_segs, intensity)
 
+    def load_glom_cells(self):
+        with open(os.path.join(self.slice_dir, 'glom_cells.json')) as f:
+            self.glom_cells = json.load(f)
 
-    def build(self):
-        self.netParams = netpyne_specs.NetParams()
+    def stim_glom_segments(self, time, input_segs, intensity):
+        h = self.h
 
-        #import pydevd
-        #pydevd.settrace('192.168.0.34', port=4200, stdoutToServer=True, stderrToServer=True)
+        delay = pow(intensity, -3.57)
+        gmax = intensity * 1.0
 
-        netpyne_cells = { 'MC': [], 'GC': [], 'TC': [], 'PGC': [] }
+        for seg_name in input_segs:
+            # Create synapse point process
+            seg = eval(seg_name)
+            syn = h.Exp2Syn(seg)
+            syn.tau1 = 20
+            syn.tau2 = 200
 
-        for i, cell in enumerate(self.cells):
-            netpyne_cell = {
-                'cellLabel': cell.type.id + str(i).zfill(6),
-                'x': cell.x,
-                'y': cell.y,
-                'z': cell.z
+            # Netstim to send the input
+            ns = h.NetStim()
+            ns.number = 1
+            ns.start = time
+            ns.noise = 0
 
-            }
-            netpyne_cells[cell.type.id].append(netpyne_cell)
+            # Netcon to trigger the synapse
+            netcon = h.NetCon(
+                ns,
+                syn,
+                0,  # thresh
+                delay,
+                gmax  # weight
+            )
 
+            self.inputs.append((syn, ns, netcon))
 
-        self.netParams.popParams['MC'] =  {'cellType': "MC", 'cellModel': 'HH', 'cellsList': netpyne_cells['MC']}
-        self.netParams.popParams['TC'] =  {'cellType': "TC", 'cellModel': 'HH', 'cellsList': netpyne_cells['TC']}
-        self.netParams.popParams['GC'] =  {'cellType': "GC", 'cellModel': 'HH', 'cellsList': netpyne_cells['GC']}
-        self.netParams.popParams['PGC'] = {'cellType': "PGC", 'cellModel': 'HH', 'cellsList': netpyne_cells['PGC']}
+    def load_cells(self, cell_type):
 
-        self.netParams.cellParams['MC'] = {
-            'conds': { 'cellType': 'MC' },
-            'secs': {
-                'soma': {
-                    'geom': {
-                        'diam': 18.8,
-                        'L': 18.8,
-                        'Ra': 123.0
-                    },
-                    'mechs': {
-                        'hh': {
-                            'gnabar': 0.12,
-                            'gkbar': 0.036,
-                            'gl': 0.003,
-                            'el': -70.0
-                        }
-                    },
-                }
-            }
-        }
-        self.netParams.cellParams['TC'] = {
-            'conds': { 'cellType': 'TC' },
-            'secs': {
-                'soma': {
-                    'geom': {
-                        'diam': 10,
-                        'L': 10,
-                        'Ra': 123.0
-                    },
-                    'mechs': {
-                        'hh': {
-                            'gnabar': 0.12,
-                            'gkbar': 0.036,
-                            'gl': 0.003,
-                            'el': -70.0
-                        }
-                    },
-                }
-            }
-        }
+        # Load the cell json file
+        path = os.path.join(self.slice_dir, cell_type + 's.json')
 
-        self.netParams.cellParams['GC'] = {
-            'conds': { 'cellType': 'GC' },
-            'secs': {
-                'soma': {
-                    'geom': {
-                        'diam': 5,
-                        'L': 5,
-                        'Ra': 123.0
-                    },
-                    'mechs': {
-                        'hh': {
-                            'gnabar': 0.12,
-                            'gkbar': 0.036,
-                            'gl': 0.003,
-                            'el': -70.0
-                        }
-                    },
-                }
-            }
-        }
+        with open(path, 'r') as f:
+            group_dict = json.load(f)
 
-        self.netParams.cellParams['PGC'] = {
-            'conds': { 'cellType': 'PGC' },
-            'secs': {
-                'soma': {
-                    'geom': {
-                        'diam': 5,
-                        'L': 5,
-                        'Ra': 123.0
-                    },
-                    'mechs': {
-                        'hh': {
-                            'gnabar': 0.12,
-                            'gkbar': 0.036,
-                            'gl': 0.003,
-                            'el': -70.0
-                        }
-                    },
-                }
-            }
-        }
+        # Count how many of each cell model we have
+        cell_counts = {}
 
-        self.netParams.synMechParams['exc'] = {
-            'mod': 'Exp2Syn',
-            'tau1': 0.1,
-            'tau2': 5.0,
-            'e': 0,
-        }
+        for root in group_dict['roots']:
+            name = root['name']
+            name = name[0:name.find('[')]
 
-        self.netParams.synMechParams['inhib'] = {
-            'mod': 'Exp2Syn',
-            'tau1': 0.1,
-            'tau2': 5.0,
-            'e': -70,
-        }
+            count = cell_counts.get(name, 0)
+            count += 1
 
-        self.netParams.stimSourceParams['bkg'] = {
-            'type': 'NetStim',
-            'rate': 10,
-            'noise': 0.5
-        }
+            cell_counts[name] = count
 
-        self.netParams.stimTargetParams['bkg->MC'] = {
-            'source': 'bkg',
-            'conds': { 'cellType': 'MC' },
-            'weight': 0.01,
-            'delay': 5,
-            'synMech': 'exc'
-        }
+        # Load that many base instances of each model
+        self.cells[cell_type] = []
+        for cell_model_name, count in cell_counts.items():
+            cell_models = [eval(cell_model_name + '()') for _ in range(count)]
+            self.cells[cell_type].extend(cell_models)
 
-        self.netParams.stimTargetParams['bkg->TC'] = {
-            'source': 'bkg',
-            'conds': { 'cellType': 'TC' },
-            'weight': 0.01,
-            'delay': 5,
-            'synMech': 'exc'
-        }
+        # Update section index with the new cells
+        self.bn_server.update_section_index()
 
-        self.netParams.connParams['MC->GC'] = {
-            'preConds': {'pop': 'MC'},
-            'postConds': {'pop': 'GC'},
-            'probability': 1.0,
-            'weight': 0.01,
-            'delay': 5,
-            'sec': 'soma',
-            'loc': 0.5,
-            'synMech': 'exc'
-        }
+        # Apply the cell json file onto the base instances
+        self.bn_server.update_groups([group_dict])
 
-        self.netParams.connParams['GC->MC'] = {
-            'preConds': {'pop': 'GC'},
-            'postConds': {'pop': 'MC'},
-            'probability': 1.0,
-            'weight': 0.01,
-            'delay': 1,
-            'sec': 'soma',
-            'loc': 0.5,
-            'synMech': 'inhib'
-        }
+    def load_synapse_set(self, synapse_set):
+        path = os.path.join(self.slice_dir, synapse_set + '.json')
 
-        self.netParams.connParams['TC->GC'] = {
-            'preConds': {'pop': 'TC'},
-            'postConds': {'pop': 'GC'},
-            'probability': 1.0,
-            'weight': 0.01,
-            'delay': 5,
-            'sec': 'soma',
-            'loc': 0.5,
-            'synMech': 'exc'
-        }
+        with open(path, 'r') as f:
+            synapse_set_dict = json.load(f)
 
-        self.netParams.connParams['GC->TC'] = {
-            'preConds': {'pop': 'GC'},
-            'postConds': {'pop': 'TC'},
-            'probability': 1.0,
-            'weight': 0.01,
-            'delay': 1,
-            'sec': 'soma',
-            'loc': 0.5,
-            'synMech': 'inhib'
-        }
+        self.bn_server.create_synapses(synapse_set_dict)
 
-        self.netParams.connParams['MC->PGC'] = {
-            'preConds': {'pop': 'MC'},
-            'postConds': {'pop': 'PGC'},
-            'probability': 1.0,
-            'weight': 0.01,
-            'delay': 5,
-            'sec': 'soma',
-            'loc': 0.5,
-            'synMech': 'exc'
-        }
-
-        self.netParams.connParams['PGC->MC'] = {
-            'preConds': {'pop': 'PGC'},
-            'postConds': {'pop': 'MC'},
-            'probability': 1.0,
-            'weight': 0.01,
-            'delay': 1,
-            'sec': 'soma',
-            'loc': 0.5,
-            'synMech': 'inhib'
-        }
-
-        self.netParams.connParams['TC->PGC'] = {
-            'preConds': {'pop': 'TC'},
-            'postConds': {'pop': 'PGC'},
-            'probability': 1.0,
-            'weight': 0.01,
-            'delay': 5,
-            'sec': 'soma',
-            'loc': 0.5,
-            'synMech': 'exc'
-        }
-
-        self.netParams.connParams['PGC->TC'] = {
-            'preConds': {'pop': 'PGC'},
-            'postConds': {'pop': 'TC'},
-            'probability': 1.0,
-            'weight': 0.01,
-            'delay': 1,
-            'sec': 'soma',
-            'loc': 0.5,
-            'synMech': 'inhib'
-        }
-
-    def setup_simulation(self):
-        self.simConfig = netpyne_specs.SimConfig()
-
-        self.simConfig.recordLFP = [[e.x, e.y, e.z] for e in self.lfp_electrodes]
-
-        self.simConfig.duration = 1000
-        self.simConfig.dt = 1 / 400.0
-        self.simConfig.verbose = False
-        self.simConfig.recordTraces = {
-            'V_soma': {
-                'sec': 'soma',
-                'loc': 0.5,
-                'var': 'v'
-            }
-        }
-        self.simConfig.recordStep = 0.5
-        self.simConfig.filename = 'model_output'
-        self.simConfig.savePickle = False
-
-        self.simConfig.analysis['plotRaster'] = True
-        self.simConfig.analysis['plotTraces'] = {'include': [0, 1]}
-        self.simConfig.analysis['plot2Dnet'] = True
-        self.simConfig.analysis['plotLFP'] = True
-
-    def run(self):
-        netpyne_sim.createSimulateAnalyze(self.netParams, self.simConfig)
-
-
-    def within_modeled_region(self, target):
-        return (
-            (target.x >= self.properties['modeled_region_xyz_start'][0]) &
-            (target.x <= self.properties['modeled_region_xyz_end'][0]) &
-            (target.y >= self.properties['modeled_region_xyz_start'][1]) &
-            (target.y <= self.properties['modeled_region_xyz_end'][1]) &
-            (target.z >= self.properties['modeled_region_xyz_start'][2]) &
-            (target.z <= self.properties['modeled_region_xyz_end'][2])
-        )
-
-
-if __name__ == "__main__":
-    model = OlfactoryBulb()
-    model.build()
-    model.setup_simulation()
-    model.run()
