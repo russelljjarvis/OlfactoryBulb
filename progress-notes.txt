@@ -503,7 +503,83 @@ Network with inputs
 TODO: confiner needs to be re-visited, the angles are off - possibly a lower length limit is needed, or debug aids
 
 Slice Builder: need to save synaptic data
+	synapse entries are stored in synapse sets
+	if the entries are saved as a file, they can be re-created
+	
+	FUTURE: allow applying the syn .py files without the need for blenderneuron i.e. self-containing NEURON py files
 
-Slice initializer: once the slice is built, the initializer should be used to study it: supply inputs, measure outputs
+
+	
+
+Slice initializer: once the slice is built, the initializer should be used to study it: supply inputs, measure outputs DONE
+
+TODO:
+	MPI
+	Cells - each cell has to be built on a rank - either round robin, complexity, or some other assignment scheme
+
+	Connections:
+		Some conns span ranks, while others are within rank
+		Within ranks are the classic NetCons(source._ref_v, post_syn)
+		Conns that cross ranks need a GID for each pre-end, attach the GID to the pre-seg, 
+			and gid_connect(pre_gid, postsyn) on the rank that holds the post-seg
+
+	PreSyn GIDs
+	PostSyns
+	gid_connects to PostSyns
+
+	so first decide whether the cell will be built on a rank
+	
+	connections
+		if pre-post are on same rank, classic con
+
+		determine if pre-loc is on cell on this rank
+		if yes assign gids to all the pre-locations, call pc.cell(gid, netcon(section))
+
+		determine if post-loc is on cell on this rank
+		if so, get the gid of the pre-loc and make a netcon to postsyn with gid_connect
+
+		if each con had an id, it could be used as a gid
+
+	how do you know if a section is on this rank?
+		try accessing it? - no because not all cells will be created
+		there almost needs to be a map between cell names in single vs MPI
+		yes the conns, gloms, etc.. all assume single thread - that's how they're created
+		but now there is an additional layer of indirection
+		GC[2] on single thread might be GC[0] on a rank
+		Thus when a conn seg says GC[2].soma, that should be first looked up in the MPI map so that mpimap['GC[2].soma'] => 'GC[0].soma'
+		
+		
+	
+	
+	mapping the cells onto ranks
+		gloms, mcs, tcs, gcs
+		just a basic one to work would be nice - maybe could make it more fancy later
+		basic is: distribute MCs to round robin, then TCs, then GCs
+		what are we storing: single threaded name as key, value stores rank ID, and name of MPI name
+			GC[2]->rank:0, name:GC[0]
+			
+		
+		how do i get the MPI name? extract from the regex? i think so
+		
+		loading cell morphology
+
+		how will i know what the name of a single rank cell will be under N ranks?
+		if each cell got a unique id
+
+	how do I assign each pre-loc a unique gid, given there are multiple syn_sets?
+		same synsets will be applied across ranks, gids can be reconstructed in parallel, just need a counter variable at the node level
+		this doesnt work when some of the pre locations refer to the same segment
+		only the last assigned gid ends up sending messages to syns
+
+		the general question is, given a set of connections from pre- to post- locations, where sume of the pre- locs refer to same segments, 
+			how do you assign gids so that no pre- segment has more than one gid?
+		furthemore if there are multiple syn sets, between different cell groups MC->GC and TC->GC, how do you avoid the dups across the whole network?
+		it has to be done at a place that is aware of the whole net
+		
+		
+		
+		
+
+	
 	
 	
