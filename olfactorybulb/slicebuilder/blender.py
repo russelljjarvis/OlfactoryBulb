@@ -62,7 +62,7 @@ class SliceBuilderBlender:
     def __init__(self,
                  odors=['Apple'], # use 'all' for all gloms, else e.g. ['Apple', 'Mint']
                  slice_object_name='TestSlice',
-                 max_mcs=5, max_tcs=None, max_gcs=None,  # Uses mouse ratios if None
+                 max_mcs=1, max_tcs=None, max_gcs=None,  # Uses mouse ratios if None
                  mc_particles_object_name='2 ML Particles',
                  tc_particles_object_name='1 OPL Particles',
                  gc_particles_object_name='4 GRL Particles',
@@ -132,9 +132,9 @@ class SliceBuilderBlender:
         self.add_synapse_sets()
 
         # Select all cells in groups
-        self.node.groups['MCs'].select_roots('Pattern','MC*')
-        self.node.groups['TCs'].select_roots('Pattern','TC*')
-        self.node.groups['GCs'].select_roots('Pattern','GC*')
+        self.node.groups['MCs'].select_roots('All','MC*')
+        self.node.groups['TCs'].select_roots('All','TC*')
+        self.node.groups['GCs'].select_roots('All','GC*')
 
         # Save all cells
         for group in self.node.groups.values():

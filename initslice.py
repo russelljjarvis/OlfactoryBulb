@@ -5,5 +5,3 @@ if '-mpi' in sys.argv:
 from olfactorybulb.model import OlfactoryBulb as OB
 
 ob = OB('TestSlice')
-
-ob.h.quit()

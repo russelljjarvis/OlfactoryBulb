@@ -14,7 +14,6 @@ class OlfactoryBulb:
         self.cells = {}
         self.inputs = []
         self.bn_server = NeuronNode()
-        self.bn_server.stop_server()
 
         from neuron import h, load_mechanisms
         self.h = h
@@ -22,6 +21,9 @@ class OlfactoryBulb:
         self.mpimap = {}
         self.nranks = self.pc.nhost()
         self.mpirank = self.pc.id()
+
+        if self.nranks > 1:
+            self.bn_server.stop_server()
 
         # Keep track of rank complexities with a min-heap
         self.rank_complexities = [(0, r) for r in range(self.nranks)]
@@ -63,17 +65,19 @@ class OlfactoryBulb:
             h.newPlotI()
             [g for g in h.Graph][-1].addvar('LFPsimpy[0].value')
 
-        self.run(200.1)  # ms
+        h.tstop = 200
+        # self.run(200.1)  # ms
 
-        if self.mpirank == 0:
-            t, lfp = self.get_lfp()
+        # if self.mpirank == 0:
+        #     t, lfp = self.get_lfp()
+        #
+        #     from matplotlib import pyplot as plt
+        #     plt.plot(t, lfp)
+        #     plt.show()
 
-            from matplotlib import pyplot as plt
-            plt.plot(t, lfp)
-            plt.show()
-            pass
-
-        database.close()
+        if self.nranks > 1:
+            database.close()
+            h.quit()
 
     def run(self, tstop):
 
