@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import json
 from prev_ob_models.Birgiolas2020.isolated_cells import *
 from blenderneuron.nrn.neuronnode import NeuronNode
@@ -7,6 +8,8 @@ from math import pow
 from LFPsim.LFPsimpy import LfpElectrode
 import sys
 from heapq import *
+from matplotlib import pyplot as plt
+from hashlib import sha1
 
 class OlfactoryBulb:
     def __init__(self, slice_name):
@@ -28,6 +31,10 @@ class OlfactoryBulb:
         # Keep track of rank complexities with a min-heap
         self.rank_complexities = [(0, r) for r in range(self.nranks)]
 
+        self.t_vec = h.Vector()
+        self.t_vec.record(h._ref_t, 1 / 8.0)
+        self.v_vectors = {}
+
         for cell_type in ['MC', 'GC', 'TC']:
             self.load_cells(cell_type)
 
@@ -40,12 +47,47 @@ class OlfactoryBulb:
         # Load glom->cell links
         self.load_glom_cells()
 
-        # DEBUG - set syn weights to instant APs
-        if hasattr(h, 'GabaSyn'):
-            [setattr(s, 'gmax', 1.5E1) for s in h.AmpaNmdaSyn]
-            [setattr(s, 'gmax', 1E1) for s in h.GabaSyn]
+        # Create gap junctions between MC and TC tufts
+        self.add_gap_junctions()
 
-        self.add_inputs(odor='Apple', t=100, rel_conc=0.009)
+        # # DEBUG - set syn weights to Migliore 2014 weights
+        # if hasattr(h, 'GabaSyn'):
+        #     [setattr(s, 'gmax', 0.1) for s in h.AmpaNmdaSyn]
+        #     [setattr(s, 'gmax', 0.005) for s in h.GabaSyn]
+        #     [setattr(s, 'tau1', 1) for s in h.GabaSyn]
+        #     [setattr(s, 'tau2', 100) for s in h.GabaSyn]
+
+        # DEBUG -
+        if hasattr(h, 'GabaSyn'):
+            [setattr(s, 'gmax', 10.0) for s in h.AmpaNmdaSyn]
+            [setattr(s, 'gmax', 0.005) for s in h.GabaSyn]
+            [setattr(s, 'tau2', 1) for s in h.GabaSyn]
+            [setattr(s, 'tau2', 100) for s in h.GabaSyn]
+
+        # # DEBUG - set syn weights to instant post-APs
+        # if hasattr(h, 'GabaSyn'):
+        #     [setattr(s, 'gmax', 1.5E1) for s in h.AmpaNmdaSyn]
+        #     [setattr(s, 'gmax', 1E1) for s in h.GabaSyn]
+
+        # # DEBUG - set syn weights to low inhibition by GCs
+        # if hasattr(h, 'GabaSyn'):
+        #     [setattr(s, 'gmax', 1.5E1) for s in h.AmpaNmdaSyn]
+        #     [setattr(s, 'gmax', 1E-1) for s in h.GabaSyn]
+
+        # # DEBUG - set syn weights to 0
+        # if hasattr(h, 'GabaSyn'):
+        #     [setattr(s, 'gmax', 0) for s in h.AmpaNmdaSyn]
+        #     [setattr(s, 'gmax', 0) for s in h.GabaSyn]
+
+        rel_conc = 1
+        self.add_inputs(odor='Apple', t=50,   rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=400,  rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=800,  rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=1200, rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=1600, rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=2000, rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=2400, rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=2800, rel_conc=rel_conc)
 
         # LFP
         # Inside dorsal Granule Layer
@@ -54,47 +96,56 @@ class OlfactoryBulb:
         # 8.0 mm anterior to the bregma
         # 1.3 mm lateral to the midline
         # 2.5 mm from the skull surface
-        self.electrode = self.create_lfp_electrode(116, 1078, -61)
+        self.electrode = self.create_lfp_electrode(116, 1078, -61, sampling_period=1 / 8.0)
 
         self.setup_status_reporter()
 
+        self.record_from_somas('MC')
+        self.record_from_somas('TC')
+        self.record_from_somas('GC')
+
         if self.mpirank == 0 and self.nranks == 1:
             from neuron import gui
-            h.load_file('1x1x1-testbed.ses')
+            # h.load_file('1x1x1-testbed.ses')
 
             h.newPlotI()
             [g for g in h.Graph][-1].addvar('LFPsimpy[0].value')
 
-        h.tstop = 200
-        # self.run(200.1)  # ms
+        self.run(3000.1)  # ms
 
-        # if self.mpirank == 0:
-        #     t, lfp = self.get_lfp()
-        #
-        #     from matplotlib import pyplot as plt
-        #     plt.plot(t, lfp)
-        #     plt.show()
+        self.save_recorded_somas()
+
+        if self.mpirank == 0:
+            t, lfp = self.get_lfp()
 
         if self.nranks > 1:
             database.close()
             h.quit()
 
     def run(self, tstop):
+        if self.mpirank == 0:
+            print('Starting simulation...')
 
         h = self.h
-        h.dt = 1/8.0
+        h.dt = 1 / 8.0
         h.tstop = tstop
 
         if self.nranks == 1:
+            h.cvode_active(0)
+            h.cvode.cache_efficient(1)
             h.run()
 
         else:
+            self.pc.setup_transfer()
             self.pc.timeout(1)
-            h.cvode.cache_efficient(1)
+            #h.cvode.cache_efficient(0) # This line causes gap junction Seg Faults
             h.cvode_active(0)
             self.pc.set_maxstep(1)
             h.stdinit()
             self.pc.psolve(h.tstop)
+
+        if self.mpirank == 0:
+            print('')
 
     def print_status(self):
         sys.stdout.write("\rTime: %s ms" % self.h.t)
@@ -132,7 +183,7 @@ class OlfactoryBulb:
 
         return t, lfp
 
-    def add_inputs(self, odor, t, rel_conc):
+    def get_model_inputsegs(self):
 
         # Get all the different cell models used in the slice
         input_models = set()
@@ -145,6 +196,12 @@ class OlfactoryBulb:
                            for m in CellModel \
                                .select(CellModel.class_name, CellModel.tufted_dend_root) \
                                .where(CellModel.class_name.in_(list(input_models)))}
+
+        return model_inputsegs
+
+    def add_inputs(self, odor, t, rel_conc):
+
+        model_inputsegs = self.get_model_inputsegs()
 
         # Get input odor glomeruli
         glom_intensities = {g.glom_id: g.intensity \
@@ -168,46 +225,172 @@ class OlfactoryBulb:
                 input_seg = model_inputsegs[model_class]
                 seg_address = 'h.' + rank_cell + '.' + input_seg
 
-                input_segs.append(seg_address)
+                single_rank_address = 'h.' + cell + '.' + input_seg
+                single_rank_gid = int(sha1(single_rank_address).hexdigest(), 16) % (10 ** 9)
+
+                input_segs.append((seg_address, single_rank_gid))
 
             if len(input_segs) > 0:
                 glom_intensity = glom_intensities[glom_id] * rel_conc
                 self.stim_glom_segments(t, input_segs, glom_intensity)
 
-    def load_glom_cells(self):
-        with open(os.path.join(self.slice_dir, 'glom_cells.json')) as f:
-            self.glom_cells = json.load(f)
+    def add_gap_junctions(self):
+        self.gj_source_gids = set()
+        self.gjs = []
+
+        model_inputsegs = self.get_model_inputsegs()
+
+        for glom_id, cells in self.glom_cells.items():
+
+            input_segs = []
+            for cell in cells:
+                model_class = cell[:cell.find('[')]
+                input_seg = model_inputsegs[model_class]
+
+                single_rank_address = 'h.' + cell + '.' + input_seg
+                single_rank_gid = int(sha1(single_rank_address).hexdigest(), 16) % (10 ** 9)
+
+                rank_cell = self.bn_server.rank_section_name(cell)
+
+                if rank_cell is not None:
+                    seg_address = 'h.' + rank_cell + '.' + input_seg
+                else:
+                    seg_address = None
+
+                input_segs.append((seg_address, single_rank_gid))
+
+            if len(input_segs) > 0:
+                self.create_gap_junctions_between(input_segs)
+
+
+    def create_gap_junctions_between(self, input_segs, g_gap = 1):
+        count = len(input_segs)
+
+        if count < 2:
+            return
+
+        h = self.h
+
+        first_seg = input_segs[0]
+        last_seg = input_segs[-1]
+
+        if count > 2:
+            for i, seg in enumerate(input_segs[:-1]):
+                next_seg = input_segs[i+1]
+
+                self.create_gap_junction(seg, next_seg, g_gap)
+
+        self.create_gap_junction(first_seg, last_seg, g_gap)
+
+    def create_gap_junction(self, seg_1_info, seg_2_info, g_gap):
+        h = self.h
+
+        seg_1_name, seg_1_gid = seg_1_info
+        seg_2_name, seg_2_gid = seg_2_info
+
+        # # DEBUG
+        # seg_1_gid = 10
+        # seg_2_gid = 20
+
+        if seg_1_name is not None:
+            seg1 = eval(seg_1_name.replace('(1)', '(.999)'))
+
+            if seg_1_gid not in self.gj_source_gids:
+                self.pc.source_var(seg1._ref_v, seg_1_gid, sec=seg1.sec)
+                self.gj_source_gids.add(seg_1_gid)
+
+                # print('rank', self.mpirank, 'sending v_other from', seg1, ' with ', seg_1_gid)
+
+            gap1 = h.GapJunction(seg1.x, sec=seg1.sec)
+            gap1.g = g_gap
+            self.pc.target_var(gap1._ref_v_other, seg_2_gid)
+            self.gjs.append(gap1)
+
+            # print('rank',self.mpirank, 'gj placed on', seg1, 'v_other from', seg_2_gid)
+
+        if seg_2_name is not None:
+            seg2 = eval(seg_2_name.replace('(1)', '(.999)'))
+
+            if seg_2_gid not in self.gj_source_gids:
+                self.pc.source_var(seg2._ref_v, seg_2_gid, sec=seg2.sec)
+                self.gj_source_gids.add(seg_2_gid)
+
+            # print('rank', self.mpirank, 'sending v_other from', seg2, ' with ', seg_2_gid)
+
+            gap2 = h.GapJunction(seg2)
+            gap2.g = g_gap
+            self.pc.target_var(gap2._ref_v_other, seg_1_gid)
+            self.gjs.append(gap2)
+
+            # print('rank',self.mpirank, 'gj placed on', seg2, 'v_other from', seg_1_gid)
+
+        self.pc.setup_transfer()
 
     def stim_glom_segments(self, time, input_segs, intensity):
         h = self.h
 
-        # delay = pow(intensity, -3.57)
-        delay = 0
-        weight = intensity * 1.0
+        # From Mori & Nagayama (2013) fast: 100-150ms, slow: 150 ms
+        inhale_duration = 125  # ms
 
-        for seg_name in input_segs:
+        # ORN firing rate
+        max_firing_rate = 150 # Hz from Duchamp-Viret et. al. (2000)
+
+        # Translate intensity to number of spikes per inhalation
+        spikes = int(round(max_firing_rate * intensity * (inhale_duration / 1000.0)))
+
+        times = h.Vector(self.get_gaussian_spike_train(spikes, time, inhale_duration))
+
+        # VecStim will deliver events to synapse at times
+        ns = h.VecStim()
+        ns.play(times)
+
+        for seg_name, seg_gid in input_segs:
             # Create synapse point process
             seg = eval(seg_name.replace('(1)', '(.999)'))
             syn = h.Exp2Syn(seg)
-            syn.tau1 = 20
-            syn.tau2 = 200
+            syn.tau1 = 6
+            syn.tau2 = 12
 
-            # Netstim to send the input
-            ns = h.NetStim()
-            ns.number = 1
-            ns.start = time
-            ns.noise = 0
+            # # Migliore 2014 glom stims
+            # syn.tau1 = 20
+            # syn.tau2 = 200
+            #
+            # # Netstim to send the input
+            # ns = h.NetStim()
+            # ns.number = 1
+            # ns.start = time
+            # ns.noise = 0
 
             # Netcon to trigger the synapse
             netcon = h.NetCon(
                 ns,
                 syn,
-                0,  # thresh
-                delay,
-                weight  # weight
+                0,      # thresh
+                0,      # delay
+                0.06  # weight uS
             )
 
             self.inputs.append((syn, ns, netcon))
+
+    def load_glom_cells(self):
+        with open(os.path.join(self.slice_dir, 'glom_cells.json')) as f:
+            self.glom_cells = json.load(f)
+
+    def get_gaussian_spike_train(self, spikes=50, start_time=100, duration=10, seed=0):
+        np.random.seed(seed)
+
+        # Create a gaussian whose 95% range starts at start_time
+        # and ends at start_time + duration
+        normal_stdev = duration / (2.96 * 2)
+        normal_mean = start_time + duration / 2.0
+
+        times = np.random.normal(start_time + (duration / 2.0), normal_stdev, spikes)
+
+        # Remove any spikes outside this range
+        times = times[np.where((times > start_time) & (times < start_time + duration))]
+        times.sort()
+
+        return times
 
     def load_cells(self, cell_type):
 
@@ -228,7 +411,7 @@ class OlfactoryBulb:
             nsegs = self.get_nseg_count(root)
 
             # Add to rank complexity and push back onto the heap
-            heappush(self.rank_complexities, (min_complexity+nsegs, min_complexity_rank))
+            heappush(self.rank_complexities, (min_complexity + nsegs, min_complexity_rank))
 
             # Assign cell to least busy rank
             cell_rank = min_complexity_rank
@@ -240,7 +423,7 @@ class OlfactoryBulb:
 
             count = rank_cell_counts[cell_rank].get(name, 0)
 
-            self.mpimap[root['name'][:root['name'].find(']')+1]] = {
+            self.mpimap[root['name'][:root['name'].find(']') + 1]] = {
                 'name': name + '[' + str(count * 2) + ']',
                 'rank': cell_rank
             }
@@ -260,6 +443,28 @@ class OlfactoryBulb:
         # Apply the cell json file onto the base instances
         self.bn_server.init_mpi(self.pc, self.mpimap)
         self.bn_server.update_groups([group_dict])
+
+    def record_from_somas(self, cell_type):
+        h = self.h
+
+        for cell_model in self.cells[cell_type]:
+            v_vec = h.Vector()
+            v_vec.record(cell_model.soma(0.5)._ref_v, 1 / 8.0)
+            self.v_vectors[str(cell_model.soma)] = v_vec
+
+    def save_recorded_somas(self):
+        all_v_vecs = self.pc.py_gather(self.v_vectors, 0)
+
+        if all_v_vecs is not None:
+            t = self.t_vec.to_python()
+            result = []
+            for rank_v_vecs in all_v_vecs:
+                for cell, v_vec in rank_v_vecs.items():
+                    result.append((cell, t, v_vec.to_python()))
+
+            import cPickle
+            with open('soma_vs.pkl', 'w') as f:
+                cPickle.dump(result, f)
 
     def get_nseg_count(self, root_dict):
         count = root_dict["nseg"]

@@ -62,7 +62,7 @@ class SliceBuilderBlender:
     def __init__(self,
                  odors=['Apple'], # use 'all' for all gloms, else e.g. ['Apple', 'Mint']
                  slice_object_name='TestSlice',
-                 max_mcs=1, max_tcs=None, max_gcs=None,  # Uses mouse ratios if None
+                 max_mcs=10, max_tcs=10, max_gcs=80,  # Uses mouse ratios if None
                  mc_particles_object_name='2 ML Particles',
                  tc_particles_object_name='1 OPL Particles',
                  gc_particles_object_name='4 GRL Particles',
@@ -157,7 +157,8 @@ class SliceBuilderBlender:
 
         # Show all group cells
         print('Creating blender scene...')
-        #bpy.ops.blenderneuron.display_groups()
+        # bpy.ops.blenderneuron.display_groups()
+        print('DONE')
 
     def add_synapse_sets(self):
         # Delete the default set
@@ -186,7 +187,7 @@ class SliceBuilderBlender:
         new_set.is_reciprocal = True
         new_set.synapse_name_source = 'AmpaNmdaSyn'
         new_set.synapse_params_source = str({'gmax': 0.1})
-        new_set.create_spines = True
+        new_set.create_spines = False
         new_set.spine_neck_diameter = 0.2
         new_set.spine_head_diameter = 1
         new_set.spine_name_prefix = 'Spine'

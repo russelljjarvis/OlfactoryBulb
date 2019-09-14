@@ -582,4 +582,12 @@ TODO:
 
 	
 	
+Gamma Fingerprint, Some ideas: 
+	effect of spines/no spines
+	GCs off/GCs on
+	Differential odor delay to TC/MCs
+	greater/smaller gmax of AmpaNmda or Gaba
+
+	Collect and plot spikes across cells
+	redo wavelet
 	
