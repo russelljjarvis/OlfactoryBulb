@@ -48,7 +48,8 @@ class OlfactoryBulb:
         self.load_glom_cells()
 
         # Create gap junctions between MC and TC tufts
-        self.add_gap_junctions()
+        self.add_gap_junctions("MC", g_gap=10)
+        self.add_gap_junctions("TC", g_gap=10)
 
         # # DEBUG - set syn weights to Migliore 2014 weights
         # if hasattr(h, 'GabaSyn'):
@@ -57,10 +58,10 @@ class OlfactoryBulb:
         #     [setattr(s, 'tau1', 1) for s in h.GabaSyn]
         #     [setattr(s, 'tau2', 100) for s in h.GabaSyn]
 
-        # DEBUG -
+        # # DEBUG -
         if hasattr(h, 'GabaSyn'):
-            [setattr(s, 'gmax', 10.0) for s in h.AmpaNmdaSyn]
-            [setattr(s, 'gmax', 0.005) for s in h.GabaSyn]
+            [setattr(s, 'gmax', 500.0) for s in h.AmpaNmdaSyn]
+            [setattr(s, 'gmax', 5) for s in h.GabaSyn]
             [setattr(s, 'tau2', 1) for s in h.GabaSyn]
             [setattr(s, 'tau2', 100) for s in h.GabaSyn]
 
@@ -81,7 +82,7 @@ class OlfactoryBulb:
 
         rel_conc = 1
         self.add_inputs(odor='Apple', t=50,   rel_conc=rel_conc)
-        self.add_inputs(odor='Apple', t=400,  rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=300,  rel_conc=rel_conc)
         self.add_inputs(odor='Apple', t=800,  rel_conc=rel_conc)
         self.add_inputs(odor='Apple', t=1200, rel_conc=rel_conc)
         self.add_inputs(odor='Apple', t=1600, rel_conc=rel_conc)
@@ -111,7 +112,7 @@ class OlfactoryBulb:
             h.newPlotI()
             [g for g in h.Graph][-1].addvar('LFPsimpy[0].value')
 
-        self.run(3000.1)  # ms
+        self.run(300.1)  # ms
 
         self.save_recorded_somas()
 
@@ -199,42 +200,8 @@ class OlfactoryBulb:
 
         return model_inputsegs
 
-    def add_inputs(self, odor, t, rel_conc):
 
-        model_inputsegs = self.get_model_inputsegs()
-
-        # Get input odor glomeruli
-        glom_intensities = {g.glom_id: g.intensity \
-                            for g in OdorGlom \
-                                .select(OdorGlom.glom_id, OdorGlom.intensity) \
-                                .join(Odor) \
-                                .where(Odor.name == odor)}
-
-        for glom_id, cells in self.glom_cells.items():
-            glom_id = int(glom_id)
-
-            input_segs = []
-            for cell in cells:
-                rank_cell = self.bn_server.rank_section_name(cell)
-
-                # Add inputs only to cells that are on this rank
-                if rank_cell is None:
-                    continue
-
-                model_class = rank_cell[:rank_cell.find('[')]
-                input_seg = model_inputsegs[model_class]
-                seg_address = 'h.' + rank_cell + '.' + input_seg
-
-                single_rank_address = 'h.' + cell + '.' + input_seg
-                single_rank_gid = int(sha1(single_rank_address).hexdigest(), 16) % (10 ** 9)
-
-                input_segs.append((seg_address, single_rank_gid))
-
-            if len(input_segs) > 0:
-                glom_intensity = glom_intensities[glom_id] * rel_conc
-                self.stim_glom_segments(t, input_segs, glom_intensity)
-
-    def add_gap_junctions(self):
+    def add_gap_junctions(self, in_name, g_gap):
         self.gj_source_gids = set()
         self.gjs = []
 
@@ -244,6 +211,9 @@ class OlfactoryBulb:
 
             input_segs = []
             for cell in cells:
+                if in_name not in cell:
+                    continue
+
                 model_class = cell[:cell.find('[')]
                 input_seg = model_inputsegs[model_class]
 
@@ -260,10 +230,9 @@ class OlfactoryBulb:
                 input_segs.append((seg_address, single_rank_gid))
 
             if len(input_segs) > 0:
-                self.create_gap_junctions_between(input_segs)
+                self.create_gap_junctions_between(input_segs, g_gap)
 
-
-    def create_gap_junctions_between(self, input_segs, g_gap = 1):
+    def create_gap_junctions_between(self, input_segs, g_gap):
         count = len(input_segs)
 
         if count < 2:
@@ -326,6 +295,41 @@ class OlfactoryBulb:
 
         self.pc.setup_transfer()
 
+    def add_inputs(self, odor, t, rel_conc):
+
+        model_inputsegs = self.get_model_inputsegs()
+
+        # Get input odor glomeruli
+        glom_intensities = {g.glom_id: g.intensity \
+                            for g in OdorGlom \
+                                .select(OdorGlom.glom_id, OdorGlom.intensity) \
+                                .join(Odor) \
+                                .where(Odor.name == odor)}
+
+        for glom_id, cells in self.glom_cells.items():
+            glom_id = int(glom_id)
+
+            input_segs = []
+            for cell in cells:
+                rank_cell = self.bn_server.rank_section_name(cell)
+
+                # Add inputs only to cells that are on this rank
+                if rank_cell is None:
+                    continue
+
+                model_class = rank_cell[:rank_cell.find('[')]
+                input_seg = model_inputsegs[model_class]
+                seg_address = 'h.' + rank_cell + '.' + input_seg
+
+                single_rank_address = 'h.' + cell + '.' + input_seg
+                single_rank_gid = int(sha1(single_rank_address).hexdigest(), 16) % (10 ** 9)
+
+                input_segs.append((seg_address, single_rank_gid))
+
+            if len(input_segs) > 0:
+                glom_intensity = glom_intensities[glom_id] * rel_conc
+                self.stim_glom_segments(t, input_segs, glom_intensity)
+
     def stim_glom_segments(self, time, input_segs, intensity):
         h = self.h
 
@@ -335,39 +339,47 @@ class OlfactoryBulb:
         # ORN firing rate
         max_firing_rate = 150 # Hz from Duchamp-Viret et. al. (2000)
 
+        # TCs
         # Translate intensity to number of spikes per inhalation
-        spikes = int(round(max_firing_rate * intensity * (inhale_duration / 1000.0)))
-
-        times = h.Vector(self.get_gaussian_spike_train(spikes, time, inhale_duration))
+        spikes_tc = int(round(max_firing_rate * intensity * (inhale_duration / 1000.0)))
+        times_tc = h.Vector(self.get_gaussian_spike_train(spikes_tc, time, inhale_duration))
 
         # VecStim will deliver events to synapse at times
-        ns = h.VecStim()
-        ns.play(times)
+        ns_tc = h.VecStim()
+        ns_tc.play(times_tc)
+
+        # MCs -- reduced ORN input
+        # Translate intensity to number of spikes per inhalation
+        spikes_mc = int(round(spikes_tc * 1))
+        times_mc = h.Vector(self.get_gaussian_spike_train(spikes_mc, time, inhale_duration))
+
+        # VecStim will deliver events to synapse at times
+        ns_mc = h.VecStim()
+        ns_mc.play(times_mc)
 
         for seg_name, seg_gid in input_segs:
             # Create synapse point process
             seg = eval(seg_name.replace('(1)', '(.999)'))
             syn = h.Exp2Syn(seg)
-            syn.tau1 = 6
+            syn.tau1 = 6        # Gilra Bhalla (2016)
             syn.tau2 = 12
 
-            # # Migliore 2014 glom stims
-            # syn.tau1 = 20
-            # syn.tau2 = 200
-            #
-            # # Netstim to send the input
-            # ns = h.NetStim()
-            # ns.number = 1
-            # ns.start = time
-            # ns.noise = 0
+            if "MC" in seg_name:
+                ns = ns_mc
+                weight = 0.03
+                delay = 25
+            else:  # "TC"
+                ns = ns_tc
+                weight = 0.06
+                delay=0
 
             # Netcon to trigger the synapse
             netcon = h.NetCon(
                 ns,
                 syn,
                 0,      # thresh
-                0,      # delay
-                0.06  # weight uS
+                delay,      # delay
+                weight  # weight uS
             )
 
             self.inputs.append((syn, ns, netcon))

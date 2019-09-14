@@ -62,7 +62,7 @@ class SliceBuilderBlender:
     def __init__(self,
                  odors=['Apple'], # use 'all' for all gloms, else e.g. ['Apple', 'Mint']
                  slice_object_name='TestSlice',
-                 max_mcs=10, max_tcs=10, max_gcs=80,  # Uses mouse ratios if None
+                 max_mcs=5, max_tcs=5, max_gcs=20,  # Uses mouse ratios if None
                  mc_particles_object_name='2 ML Particles',
                  tc_particles_object_name='1 OPL Particles',
                  gc_particles_object_name='4 GRL Particles',
@@ -173,7 +173,7 @@ class SliceBuilderBlender:
         new_set.group_source = group_from
         new_set.group_dest = group_to
 
-        new_set.max_distance = 40 # 5
+        new_set.max_distance = 5
         new_set.use_radius = True
         new_set.max_syns_per_pt = 1
         new_set.section_pattern_source = "*apic*"
