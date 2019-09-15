@@ -27,11 +27,11 @@ ENDCOMMENT
 
 NEURON {
 	POINT_PROCESS GabaSyn
-	RANGE tau1, tau2, e, i
+	RANGE tau1, tau2, e, i, ltdinvl, ltpinvl
 	NONSPECIFIC_CURRENT i
 	RANGE gmax
 	RANGE x, mgid, ggid, srcgid
-	GLOBAL ltdinvl, ltpinvl, sighalf, sigslope
+	GLOBAL sighalf, sigslope
 
 	RANGE g
 }

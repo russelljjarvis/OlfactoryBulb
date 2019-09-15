@@ -62,7 +62,7 @@ class SliceBuilderBlender:
     def __init__(self,
                  odors=['Apple'], # use 'all' for all gloms, else e.g. ['Apple', 'Mint']
                  slice_object_name='TestSlice',
-                 max_mcs=5, max_tcs=5, max_gcs=20,  # Uses mouse ratios if None
+                 max_mcs=5, max_tcs=10, max_gcs=40,  # Uses mouse ratios if None
                  mc_particles_object_name='2 ML Particles',
                  tc_particles_object_name='1 OPL Particles',
                  gc_particles_object_name='4 GRL Particles',

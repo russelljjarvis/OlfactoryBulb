@@ -10,9 +10,13 @@ import sys
 from heapq import *
 from matplotlib import pyplot as plt
 from hashlib import sha1
+from random import random, seed
 
 class OlfactoryBulb:
     def __init__(self, slice_name):
+        seed(0)
+        np.random.seed(0)
+
         self.slice_dir = os.path.abspath(os.path.join('olfactorybulb', 'slices', slice_name))
         self.cells = {}
         self.inputs = []
@@ -60,10 +64,14 @@ class OlfactoryBulb:
 
         # # DEBUG -
         if hasattr(h, 'GabaSyn'):
-            [setattr(s, 'gmax', 500.0) for s in h.AmpaNmdaSyn]
-            [setattr(s, 'gmax', 5) for s in h.GabaSyn]
-            [setattr(s, 'tau2', 1) for s in h.GabaSyn]
-            [setattr(s, 'tau2', 100) for s in h.GabaSyn]
+            [setattr(s, 'gmax', 1200.0) for s in h.AmpaNmdaSyn]
+            [setattr(s, 'ltpinvl', 1.0) for s in h.AmpaNmdaSyn]
+            [setattr(s, 'ltdinvl', 2.0) for s in h.AmpaNmdaSyn]
+
+            [setattr(s, 'gmax', 3) for s in h.GabaSyn]
+            [setattr(s, 'ltpinvl', 1.0) for s in h.GabaSyn]
+            [setattr(s, 'ltdinvl', 2.0) for s in h.GabaSyn]
+            [setattr(s, 'tau2', 75) for s in h.GabaSyn]
 
         # # DEBUG - set syn weights to instant post-APs
         # if hasattr(h, 'GabaSyn'):
@@ -81,14 +89,14 @@ class OlfactoryBulb:
         #     [setattr(s, 'gmax', 0) for s in h.GabaSyn]
 
         rel_conc = 1
-        self.add_inputs(odor='Apple', t=50,   rel_conc=rel_conc)
-        self.add_inputs(odor='Apple', t=300,  rel_conc=rel_conc)
-        self.add_inputs(odor='Apple', t=800,  rel_conc=rel_conc)
-        self.add_inputs(odor='Apple', t=1200, rel_conc=rel_conc)
-        self.add_inputs(odor='Apple', t=1600, rel_conc=rel_conc)
-        self.add_inputs(odor='Apple', t=2000, rel_conc=rel_conc)
-        self.add_inputs(odor='Apple', t=2400, rel_conc=rel_conc)
-        self.add_inputs(odor='Apple', t=2800, rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=0,   rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=200,  rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=400,  rel_conc=rel_conc)
+        # self.add_inputs(odor='Apple', t=1200, rel_conc=rel_conc)
+        # self.add_inputs(odor='Apple', t=1600, rel_conc=rel_conc)
+        # self.add_inputs(odor='Apple', t=2000, rel_conc=rel_conc)
+        # self.add_inputs(odor='Apple', t=2400, rel_conc=rel_conc)
+        # self.add_inputs(odor='Apple', t=2800, rel_conc=rel_conc)
 
         # LFP
         # Inside dorsal Granule Layer
@@ -112,7 +120,7 @@ class OlfactoryBulb:
             h.newPlotI()
             [g for g in h.Graph][-1].addvar('LFPsimpy[0].value')
 
-        self.run(300.1)  # ms
+        self.run(600.1)  # ms
 
         self.save_recorded_somas()
 
@@ -334,7 +342,7 @@ class OlfactoryBulb:
         h = self.h
 
         # From Mori & Nagayama (2013) fast: 100-150ms, slow: 150 ms
-        inhale_duration = 125  # ms
+        inhale_duration = 100  # ms
 
         # ORN firing rate
         max_firing_rate = 150 # Hz from Duchamp-Viret et. al. (2000)
@@ -342,7 +350,7 @@ class OlfactoryBulb:
         # TCs
         # Translate intensity to number of spikes per inhalation
         spikes_tc = int(round(max_firing_rate * intensity * (inhale_duration / 1000.0)))
-        times_tc = h.Vector(self.get_gaussian_spike_train(spikes_tc, time, inhale_duration))
+        times_tc = h.Vector(self.get_gaussian_spike_train(spikes_tc, time, inhale_duration, seed=time))
 
         # VecStim will deliver events to synapse at times
         ns_tc = h.VecStim()
@@ -366,20 +374,24 @@ class OlfactoryBulb:
 
             if "MC" in seg_name:
                 ns = ns_mc
-                weight = 0.03
-                delay = 25
+                weight = 0.055
+                delay = 35
+
             else:  # "TC"
                 ns = ns_tc
-                weight = 0.06
+                weight = 0.100
                 delay=0
+
+            # Add a small random delay
+            delay += random() * 15
 
             # Netcon to trigger the synapse
             netcon = h.NetCon(
                 ns,
                 syn,
-                0,      # thresh
+                0,          # thresh
                 delay,      # delay
-                weight  # weight uS
+                weight      # weight uS
             )
 
             self.inputs.append((syn, ns, netcon))

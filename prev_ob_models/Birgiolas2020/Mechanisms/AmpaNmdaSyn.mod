@@ -57,11 +57,11 @@ ENDCOMMENT
 NEURON {
 	POINT_PROCESS AmpaNmdaSyn
 	RANGE R, g, mg, inmda, iampa, gnmda, gampa
-	RANGE x, mgid, ggid, srcgid, gmax
+	RANGE x, mgid, ggid, srcgid, gmax, ltdinvl, ltpinvl
 	NONSPECIFIC_CURRENT i
 	GLOBAL Cdur, Alpha, Beta, E, Rinf, Rtau, ampatau
 	GLOBAL gampafactor, nmdafactor
-	GLOBAL ltdinvl, ltpinvl, sighalf, sigslope
+	GLOBAL sighalf, sigslope
 }
 UNITS {
 	(nA) = (nanoamp)
