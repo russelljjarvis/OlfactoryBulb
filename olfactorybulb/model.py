@@ -1,3 +1,4 @@
+import cPickle
 import os
 import numpy as np
 import json
@@ -14,19 +15,18 @@ from random import random, seed
 
 class OlfactoryBulb:
     def __init__(self, slice_name):
-        seed(0)
-        np.random.seed(0)
+        self.rnd_seed = 0
 
         self.slice_dir = os.path.abspath(os.path.join('olfactorybulb', 'slices', slice_name))
         self.cells = {}
         self.inputs = []
-        self.bn_server = NeuronNode()
+        self.bn_server = NeuronNode(end='Package')
 
         from neuron import h, load_mechanisms
         self.h = h
         self.pc = h.ParallelContext()
         self.mpimap = {}
-        self.nranks = self.pc.nhost()
+        self.nranks = int(self.pc.nhost())
         self.mpirank = self.pc.id()
 
         if self.nranks > 1:
@@ -38,6 +38,7 @@ class OlfactoryBulb:
         self.t_vec = h.Vector()
         self.t_vec.record(h._ref_t, 1 / 8.0)
         self.v_vectors = {}
+        self.input_vectors = []
 
         for cell_type in ['MC', 'GC', 'TC']:
             self.load_cells(cell_type)
@@ -64,14 +65,15 @@ class OlfactoryBulb:
 
         # # DEBUG -
         if hasattr(h, 'GabaSyn'):
-            [setattr(s, 'gmax', 1200.0) for s in h.AmpaNmdaSyn]
-            [setattr(s, 'ltpinvl', 1.0) for s in h.AmpaNmdaSyn]
-            [setattr(s, 'ltdinvl', 2.0) for s in h.AmpaNmdaSyn]
-
+            [setattr(s, 'gmax', 1000) for s in h.AmpaNmdaSyn]
             [setattr(s, 'gmax', 3) for s in h.GabaSyn]
-            [setattr(s, 'ltpinvl', 1.0) for s in h.GabaSyn]
-            [setattr(s, 'ltdinvl', 2.0) for s in h.GabaSyn]
             [setattr(s, 'tau2', 75) for s in h.GabaSyn]
+
+            # Disable plasticity
+            [setattr(s, 'ltpinvl', 0) for s in h.AmpaNmdaSyn]
+            [setattr(s, 'ltdinvl', 0) for s in h.AmpaNmdaSyn]
+            [setattr(s, 'ltpinvl', 0) for s in h.GabaSyn]
+            [setattr(s, 'ltdinvl', 0) for s in h.GabaSyn]
 
         # # DEBUG - set syn weights to instant post-APs
         # if hasattr(h, 'GabaSyn'):
@@ -88,15 +90,20 @@ class OlfactoryBulb:
         #     [setattr(s, 'gmax', 0) for s in h.AmpaNmdaSyn]
         #     [setattr(s, 'gmax', 0) for s in h.GabaSyn]
 
-        rel_conc = 1
-        self.add_inputs(odor='Apple', t=0,   rel_conc=rel_conc)
+
+        # import pydevd
+        # pydevd.settrace('192.168.0.100', port=4200)
+
+        rel_conc = 0.1
+        # self.add_inputs(odor='Apple', t=0,   rel_conc=rel_conc)
+        # self.add_inputs(odor='Mint', t=200,  rel_conc=rel_conc)
+        # self.add_inputs(odor='Coffee', t=400,  rel_conc=rel_conc)
+        # self.add_inputs(odor='Apple', t=600,  rel_conc=rel_conc)
+
+        self.add_inputs(odor='Apple', t=0,   rel_conc=0.1)
         self.add_inputs(odor='Apple', t=200,  rel_conc=rel_conc)
         self.add_inputs(odor='Apple', t=400,  rel_conc=rel_conc)
-        # self.add_inputs(odor='Apple', t=1200, rel_conc=rel_conc)
-        # self.add_inputs(odor='Apple', t=1600, rel_conc=rel_conc)
-        # self.add_inputs(odor='Apple', t=2000, rel_conc=rel_conc)
-        # self.add_inputs(odor='Apple', t=2400, rel_conc=rel_conc)
-        # self.add_inputs(odor='Apple', t=2800, rel_conc=rel_conc)
+        self.add_inputs(odor='Apple', t=600,  rel_conc=rel_conc)
 
         # LFP
         # Inside dorsal Granule Layer
@@ -120,9 +127,9 @@ class OlfactoryBulb:
             h.newPlotI()
             [g for g in h.Graph][-1].addvar('LFPsimpy[0].value')
 
-        self.run(600.1)  # ms
+        self.run(800.1)  # ms
 
-        self.save_recorded_somas()
+        self.save_recorded_vectors()
 
         if self.mpirank == 0:
             t, lfp = self.get_lfp()
@@ -130,6 +137,61 @@ class OlfactoryBulb:
         if self.nranks > 1:
             database.close()
             h.quit()
+
+    def stim_glom_segments(self, time, input_segs, intensity):
+        h = self.h
+
+        # From Mori & Nagayama (2013) fast: 100-150ms, slow: 150 ms
+        inhale_duration = 125  # ms
+
+        # ORN firing rate
+        max_firing_rate = 150 # Hz from Duchamp-Viret et. al. (2000)
+
+        # Translate intensity to number of spikes per inhalation
+        spike_count = int(round(max_firing_rate * intensity * (inhale_duration / 1000.0)))
+
+        for seg_name, seg_gid, single_rank_seg_name in input_segs:
+            # Randomize spikes to each tufted segment
+            rnd_seed = hash("%s|%s|%s|%s" % (self.rnd_seed, time, single_rank_seg_name, intensity)) % 99999999
+            np.random.seed(rnd_seed)
+
+            # Odor is modeled as a gaussian spike train representing OSN spikes during inhalation
+            # exhalation is assumed to not generate OSN spikes
+            spike_times = self.get_gaussian_spike_train(spike_count, time, inhale_duration)
+
+            # Create synapse point process
+            seg = eval(seg_name.replace('(1)', '(.999)'))
+            syn = h.Exp2Syn(seg)
+            syn.tau1 = 6        # Gilra Bhalla (2016)
+            syn.tau2 = 12
+
+            if "MC" in seg_name:  # MCs -- reduced ORN input
+                delay = 40 #35*0  # MC input delay
+                weight = 0.050 #0.055
+
+            else:  # "TC"
+                delay = 0  # TC input delay
+                weight = 0.075
+
+            # VecStim will deliver events to synapse at vector times
+            ns = h.VecStim()
+            ns.play(h.Vector(spike_times + delay))
+
+            # Netcon to trigger the synapse
+            netcon = h.NetCon(
+                ns,
+                syn,
+                0,          # thresh
+                0,          # delay
+                weight      # weight uS
+            )
+
+            # Record odor input events
+            input_vec = h.Vector()
+            netcon.record(input_vec)
+            self.input_vectors.append((single_rank_seg_name, input_vec))
+
+            self.inputs.append((syn, ns, netcon))
 
     def run(self, tstop):
         if self.mpirank == 0:
@@ -192,6 +254,7 @@ class OlfactoryBulb:
 
         return t, lfp
 
+
     def get_model_inputsegs(self):
 
         # Get all the different cell models used in the slice
@@ -207,7 +270,6 @@ class OlfactoryBulb:
                                .where(CellModel.class_name.in_(list(input_models)))}
 
         return model_inputsegs
-
 
     def add_gap_junctions(self, in_name, g_gap):
         self.gj_source_gids = set()
@@ -332,76 +394,17 @@ class OlfactoryBulb:
                 single_rank_address = 'h.' + cell + '.' + input_seg
                 single_rank_gid = int(sha1(single_rank_address).hexdigest(), 16) % (10 ** 9)
 
-                input_segs.append((seg_address, single_rank_gid))
+                input_segs.append((seg_address, single_rank_gid, single_rank_address))
 
             if len(input_segs) > 0:
                 glom_intensity = glom_intensities[glom_id] * rel_conc
                 self.stim_glom_segments(t, input_segs, glom_intensity)
 
-    def stim_glom_segments(self, time, input_segs, intensity):
-        h = self.h
-
-        # From Mori & Nagayama (2013) fast: 100-150ms, slow: 150 ms
-        inhale_duration = 100  # ms
-
-        # ORN firing rate
-        max_firing_rate = 150 # Hz from Duchamp-Viret et. al. (2000)
-
-        # TCs
-        # Translate intensity to number of spikes per inhalation
-        spikes_tc = int(round(max_firing_rate * intensity * (inhale_duration / 1000.0)))
-        times_tc = h.Vector(self.get_gaussian_spike_train(spikes_tc, time, inhale_duration, seed=time))
-
-        # VecStim will deliver events to synapse at times
-        ns_tc = h.VecStim()
-        ns_tc.play(times_tc)
-
-        # MCs -- reduced ORN input
-        # Translate intensity to number of spikes per inhalation
-        spikes_mc = int(round(spikes_tc * 1))
-        times_mc = h.Vector(self.get_gaussian_spike_train(spikes_mc, time, inhale_duration))
-
-        # VecStim will deliver events to synapse at times
-        ns_mc = h.VecStim()
-        ns_mc.play(times_mc)
-
-        for seg_name, seg_gid in input_segs:
-            # Create synapse point process
-            seg = eval(seg_name.replace('(1)', '(.999)'))
-            syn = h.Exp2Syn(seg)
-            syn.tau1 = 6        # Gilra Bhalla (2016)
-            syn.tau2 = 12
-
-            if "MC" in seg_name:
-                ns = ns_mc
-                weight = 0.055
-                delay = 35
-
-            else:  # "TC"
-                ns = ns_tc
-                weight = 0.100
-                delay=0
-
-            # Add a small random delay
-            delay += random() * 15
-
-            # Netcon to trigger the synapse
-            netcon = h.NetCon(
-                ns,
-                syn,
-                0,          # thresh
-                delay,      # delay
-                weight      # weight uS
-            )
-
-            self.inputs.append((syn, ns, netcon))
-
     def load_glom_cells(self):
         with open(os.path.join(self.slice_dir, 'glom_cells.json')) as f:
             self.glom_cells = json.load(f)
 
-    def get_gaussian_spike_train(self, spikes=50, start_time=100, duration=10, seed=0):
-        np.random.seed(seed)
+    def get_gaussian_spike_train(self, spikes=50, start_time=100, duration=10):
 
         # Create a gaussian whose 95% range starts at start_time
         # and ends at start_time + duration
@@ -476,7 +479,8 @@ class OlfactoryBulb:
             v_vec.record(cell_model.soma(0.5)._ref_v, 1 / 8.0)
             self.v_vectors[str(cell_model.soma)] = v_vec
 
-    def save_recorded_somas(self):
+    def save_recorded_vectors(self):
+        # Gather cell voltage vectors
         all_v_vecs = self.pc.py_gather(self.v_vectors, 0)
 
         if all_v_vecs is not None:
@@ -486,8 +490,19 @@ class OlfactoryBulb:
                 for cell, v_vec in rank_v_vecs.items():
                     result.append((cell, t, v_vec.to_python()))
 
-            import cPickle
             with open('soma_vs.pkl', 'w') as f:
+                cPickle.dump(result, f)
+
+        # Gather input event time vectors
+        all_input_vecs = self.pc.py_gather(self.input_vectors, 0)
+
+        if all_input_vecs is not None:
+            result = []
+            for rank_input_vecs in all_input_vecs:
+                for seg_name, t_vec in rank_input_vecs:
+                    result.append((seg_name, t_vec.to_python()))
+
+            with open('input_times.pkl', 'w') as f:
                 cPickle.dump(result, f)
 
     def get_nseg_count(self, root_dict):

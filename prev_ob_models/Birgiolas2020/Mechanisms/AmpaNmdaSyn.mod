@@ -57,10 +57,10 @@ ENDCOMMENT
 NEURON {
 	POINT_PROCESS AmpaNmdaSyn
 	RANGE R, g, mg, inmda, iampa, gnmda, gampa
-	RANGE x, mgid, ggid, srcgid, gmax, ltdinvl, ltpinvl
+	RANGE x, mgid, ggid, srcgid, gmax, ltdinvl, ltpinvl, nmdafactor
 	NONSPECIFIC_CURRENT i
 	GLOBAL Cdur, Alpha, Beta, E, Rinf, Rtau, ampatau
-	GLOBAL gampafactor, nmdafactor
+	GLOBAL gampafactor
 	GLOBAL sighalf, sigslope
 }
 UNITS {
