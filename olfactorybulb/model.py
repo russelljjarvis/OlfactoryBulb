@@ -6,20 +6,34 @@ from prev_ob_models.Birgiolas2020.isolated_cells import *
 from blenderneuron.nrn.neuronnode import NeuronNode
 from database import Odor, OdorGlom, CellModel, database
 from math import pow
-from LFPsim.LFPsimpy import LfpElectrode
+from LFPsimpy.LFPsimpy import LfpElectrode
 import sys
 from heapq import *
 from matplotlib import pyplot as plt
 from hashlib import sha1
 from random import random, seed
 
-class OlfactoryBulb:
-    def __init__(self, slice_name):
-        self.rnd_seed = 0
+from olfactorybulb.paramsets.base import *
+from olfactorybulb.paramsets.case_studies import *
+from olfactorybulb.paramsets.gj_g import *
+from olfactorybulb.paramsets.syn_props import *
+from olfactorybulb.paramsets.network_props import *
 
-        self.slice_dir = os.path.abspath(os.path.join('olfactorybulb', 'slices', slice_name))
+
+class OlfactoryBulb:
+    def __init__(self, params="ParameterSetBase"):
+        if type(params) == str:
+            params = eval(params)()
+
+        self.params = params
+
+        self.rnd_seed = params.rnd_seed
+
+        self.slice_dir = os.path.abspath(os.path.join(params.slice_dir, params.slice_name))
         self.cells = {}
         self.inputs = []
+
+        # Just use the BlenderNEURON package functions (e.g. no server/client)
         self.bn_server = NeuronNode(end='Package')
 
         from neuron import h, load_mechanisms
@@ -29,14 +43,11 @@ class OlfactoryBulb:
         self.nranks = int(self.pc.nhost())
         self.mpirank = self.pc.id()
 
-        if self.nranks > 1:
-            self.bn_server.stop_server()
-
         # Keep track of rank complexities with a min-heap
         self.rank_complexities = [(0, r) for r in range(self.nranks)]
 
         self.t_vec = h.Vector()
-        self.t_vec.record(h._ref_t, 1 / 8.0)
+        self.t_vec.record(h._ref_t, params.recording_period)
         self.v_vectors = {}
         self.input_vectors = []
 
@@ -44,7 +55,12 @@ class OlfactoryBulb:
             self.load_cells(cell_type)
 
         if self.mpirank == 0:
-            print('Rank Complexities:' + str(self.rank_complexities))
+            complexities = np.array([c[0] for c in self.rank_complexities])
+            min = np.min(complexities)
+            max = np.max(complexities)
+            mean = np.mean(complexities)
+
+            print('Rank Complexity min: %s, mean: %s, max: %s' % (min, mean, max))
 
         for synapse_set in ['GCs__MCs', 'GCs__TCs']:
             self.load_synapse_set(synapse_set)
@@ -53,8 +69,8 @@ class OlfactoryBulb:
         self.load_glom_cells()
 
         # Create gap junctions between MC and TC tufts
-        self.add_gap_junctions("MC", g_gap=10)
-        self.add_gap_junctions("TC", g_gap=10)
+        for cell_type, g_gap in params.gap_juction_gmax.items():
+            self.add_gap_junctions(cell_type, g_gap)
 
         # # DEBUG - set syn weights to Migliore 2014 weights
         # if hasattr(h, 'GabaSyn'):
@@ -63,97 +79,65 @@ class OlfactoryBulb:
         #     [setattr(s, 'tau1', 1) for s in h.GabaSyn]
         #     [setattr(s, 'tau2', 100) for s in h.GabaSyn]
 
-        # # DEBUG -
-        if hasattr(h, 'GabaSyn'):
-            [setattr(s, 'gmax', 1000) for s in h.AmpaNmdaSyn]
-            [setattr(s, 'gmax', 3) for s in h.GabaSyn]
-            [setattr(s, 'tau2', 75) for s in h.GabaSyn]
+        # Set synapse parameters
+        for syn_mech, syn_values in params.synapse_properties.items():
+            if hasattr(h, syn_mech):
+                for syn_attrib, attrib_value in syn_values.items():
+                    [setattr(s, syn_attrib, attrib_value) for s in getattr(h, syn_mech)]
 
-            # Disable plasticity
-            [setattr(s, 'ltpinvl', 0) for s in h.AmpaNmdaSyn]
-            [setattr(s, 'ltdinvl', 0) for s in h.AmpaNmdaSyn]
-            [setattr(s, 'ltpinvl', 0) for s in h.GabaSyn]
-            [setattr(s, 'ltdinvl', 0) for s in h.GabaSyn]
-
-        # # DEBUG - set syn weights to instant post-APs
-        # if hasattr(h, 'GabaSyn'):
-        #     [setattr(s, 'gmax', 1.5E1) for s in h.AmpaNmdaSyn]
-        #     [setattr(s, 'gmax', 1E1) for s in h.GabaSyn]
-
-        # # DEBUG - set syn weights to low inhibition by GCs
-        # if hasattr(h, 'GabaSyn'):
-        #     [setattr(s, 'gmax', 1.5E1) for s in h.AmpaNmdaSyn]
-        #     [setattr(s, 'gmax', 1E-1) for s in h.GabaSyn]
-
-        # # DEBUG - set syn weights to 0
-        # if hasattr(h, 'GabaSyn'):
-        #     [setattr(s, 'gmax', 0) for s in h.AmpaNmdaSyn]
-        #     [setattr(s, 'gmax', 0) for s in h.GabaSyn]
-
-
-        # import pydevd
-        # pydevd.settrace('192.168.0.100', port=4200)
-
-        rel_conc = 0.1
-        # self.add_inputs(odor='Apple', t=0,   rel_conc=rel_conc)
-        # self.add_inputs(odor='Mint', t=200,  rel_conc=rel_conc)
-        # self.add_inputs(odor='Coffee', t=400,  rel_conc=rel_conc)
-        # self.add_inputs(odor='Apple', t=600,  rel_conc=rel_conc)
-
-        self.add_inputs(odor='Apple', t=0,   rel_conc=0.1)
-        self.add_inputs(odor='Apple', t=200,  rel_conc=rel_conc)
-        self.add_inputs(odor='Apple', t=400,  rel_conc=rel_conc)
-        self.add_inputs(odor='Apple', t=600,  rel_conc=rel_conc)
+        # Add glomerular inputs
+        for time, odor_info in params.input_odors.items():
+            self.add_inputs(odor=odor_info["name"], t=time, rel_conc=odor_info["rel_conc"])
 
         # LFP
-        # Inside dorsal Granule Layer
-        # Approximaly to where it was located in Manabe & Mori (2013)
-        # In adult male Long-Evans rat:
-        # 8.0 mm anterior to the bregma
-        # 1.3 mm lateral to the midline
-        # 2.5 mm from the skull surface
-        self.electrode = self.create_lfp_electrode(116, 1078, -61, sampling_period=1 / 8.0)
+        self.electrode = self.create_lfp_electrode(*params.lfp_electrode_location,
+                                                   sampling_period=params.recording_period)
 
         self.setup_status_reporter()
 
-        self.record_from_somas('MC')
-        self.record_from_somas('TC')
-        self.record_from_somas('GC')
+        for cell_type in params.record_from_somas:
+            self.record_from_somas(cell_type)
 
         if self.mpirank == 0 and self.nranks == 1:
             from neuron import gui
             # h.load_file('1x1x1-testbed.ses')
 
             h.newPlotI()
-            [g for g in h.Graph][-1].addvar('LFPsimpy[0].value')
+            [g for g in h.Graph][-1].addvar('LfpElectrode[0].value')
 
-        self.run(800.1)  # ms
+        self.run(params.tstop)
+
+        if self.mpirank == 0:
+            self.results_dir = os.path.join('olfactorybulb', 'results', params.name)
+            if not os.path.exists(self.results_dir):
+                os.makedirs(self.results_dir)
 
         self.save_recorded_vectors()
 
         if self.mpirank == 0:
             t, lfp = self.get_lfp()
 
+        # Cleanup on MPI
         if self.nranks > 1:
             database.close()
-            h.quit()
+            self.h.quit()
+
 
     def stim_glom_segments(self, time, input_segs, intensity):
         h = self.h
 
-        # From Mori & Nagayama (2013) fast: 100-150ms, slow: 150 ms
-        inhale_duration = 125  # ms
+        inhale_duration = self.params.inhale_duration
 
         # ORN firing rate
-        max_firing_rate = 150 # Hz from Duchamp-Viret et. al. (2000)
+        max_firing_rate = self.params.max_firing_rate
 
         # Translate intensity to number of spikes per inhalation
         spike_count = int(round(max_firing_rate * intensity * (inhale_duration / 1000.0)))
 
         for seg_name, seg_gid, single_rank_seg_name in input_segs:
             # Randomize spikes to each tufted segment
-            rnd_seed = hash("%s|%s|%s|%s" % (self.rnd_seed, time, single_rank_seg_name, intensity)) % 99999999
-            np.random.seed(rnd_seed)
+            seed_source = "%s|%s|%s|%s" % (self.rnd_seed, time, single_rank_seg_name, intensity)
+            np.random.seed(self.stable_hash(seed_source))
 
             # Odor is modeled as a gaussian spike train representing OSN spikes during inhalation
             # exhalation is assumed to not generate OSN spikes
@@ -162,16 +146,16 @@ class OlfactoryBulb:
             # Create synapse point process
             seg = eval(seg_name.replace('(1)', '(.999)'))
             syn = h.Exp2Syn(seg)
-            syn.tau1 = 6        # Gilra Bhalla (2016)
-            syn.tau2 = 12
+            syn.tau1 = self.params.input_syn_tau1
+            syn.tau2 = self.params.input_syn_tau2
 
             if "MC" in seg_name:  # MCs -- reduced ORN input
-                delay = 40 #35*0  # MC input delay
-                weight = 0.050 #0.055
+                delay = self.params.mc_input_delay
+                weight = self.params.mc_input_weight
 
             else:  # "TC"
-                delay = 0  # TC input delay
-                weight = 0.075
+                delay = self.params.tc_input_delay
+                weight = self.params.tc_input_weight
 
             # VecStim will deliver events to synapse at vector times
             ns = h.VecStim()
@@ -181,9 +165,9 @@ class OlfactoryBulb:
             netcon = h.NetCon(
                 ns,
                 syn,
-                0,          # thresh
-                0,          # delay
-                weight      # weight uS
+                0,  # thresh
+                0,  # delay
+                weight  # weight uS
             )
 
             # Record odor input events
@@ -193,12 +177,15 @@ class OlfactoryBulb:
 
             self.inputs.append((syn, ns, netcon))
 
+    def stable_hash(self, source, digits=9):
+        return int(sha1(source).hexdigest(), 16) % (10 ** digits)
+
     def run(self, tstop):
         if self.mpirank == 0:
             print('Starting simulation...')
 
         h = self.h
-        h.dt = 1 / 8.0
+        h.dt = self.params.sim_dt
         h.tstop = tstop
 
         if self.nranks == 1:
@@ -209,12 +196,13 @@ class OlfactoryBulb:
         else:
             self.pc.setup_transfer()
             self.pc.timeout(1)
-            #h.cvode.cache_efficient(0) # This line causes gap junction Seg Faults
+            # h.cvode.cache_efficient(0) # This line causes gap junction Seg Faults
             h.cvode_active(0)
             self.pc.set_maxstep(1)
             h.stdinit()
             self.pc.psolve(h.tstop)
 
+        # Clear status updater line
         if self.mpirank == 0:
             print('')
 
@@ -238,7 +226,7 @@ class OlfactoryBulb:
             self.collector_stim = collector_stim
             self.collector_con = collector_con
 
-    def create_lfp_electrode(self, x, y, z, sampling_period=0.1, method='Line'):
+    def create_lfp_electrode(self, x, y, z, sampling_period, method='Line'):
         return LfpElectrode(x, y, z, sampling_period, method)
 
     def get_lfp(self):
@@ -249,11 +237,10 @@ class OlfactoryBulb:
         lfp = self.electrode.values
 
         import cPickle
-        with open('lfp.pkl', 'w') as f:
+        with open(os.path.join(self.results_dir, 'lfp.pkl'), 'w') as f:
             cPickle.dump((t, lfp), f)
 
         return t, lfp
-
 
     def get_model_inputsegs(self):
 
@@ -288,7 +275,7 @@ class OlfactoryBulb:
                 input_seg = model_inputsegs[model_class]
 
                 single_rank_address = 'h.' + cell + '.' + input_seg
-                single_rank_gid = int(sha1(single_rank_address).hexdigest(), 16) % (10 ** 9)
+                single_rank_gid = self.stable_hash(single_rank_address)
 
                 rank_cell = self.bn_server.rank_section_name(cell)
 
@@ -315,7 +302,7 @@ class OlfactoryBulb:
 
         if count > 2:
             for i, seg in enumerate(input_segs[:-1]):
-                next_seg = input_segs[i+1]
+                next_seg = input_segs[i + 1]
 
                 self.create_gap_junction(seg, next_seg, g_gap)
 
@@ -327,10 +314,6 @@ class OlfactoryBulb:
         seg_1_name, seg_1_gid = seg_1_info
         seg_2_name, seg_2_gid = seg_2_info
 
-        # # DEBUG
-        # seg_1_gid = 10
-        # seg_2_gid = 20
-
         if seg_1_name is not None:
             seg1 = eval(seg_1_name.replace('(1)', '(.999)'))
 
@@ -338,14 +321,10 @@ class OlfactoryBulb:
                 self.pc.source_var(seg1._ref_v, seg_1_gid, sec=seg1.sec)
                 self.gj_source_gids.add(seg_1_gid)
 
-                # print('rank', self.mpirank, 'sending v_other from', seg1, ' with ', seg_1_gid)
-
             gap1 = h.GapJunction(seg1.x, sec=seg1.sec)
             gap1.g = g_gap
             self.pc.target_var(gap1._ref_v_other, seg_2_gid)
             self.gjs.append(gap1)
-
-            # print('rank',self.mpirank, 'gj placed on', seg1, 'v_other from', seg_2_gid)
 
         if seg_2_name is not None:
             seg2 = eval(seg_2_name.replace('(1)', '(.999)'))
@@ -354,14 +333,10 @@ class OlfactoryBulb:
                 self.pc.source_var(seg2._ref_v, seg_2_gid, sec=seg2.sec)
                 self.gj_source_gids.add(seg_2_gid)
 
-            # print('rank', self.mpirank, 'sending v_other from', seg2, ' with ', seg_2_gid)
-
             gap2 = h.GapJunction(seg2)
             gap2.g = g_gap
             self.pc.target_var(gap2._ref_v_other, seg_1_gid)
             self.gjs.append(gap2)
-
-            # print('rank',self.mpirank, 'gj placed on', seg2, 'v_other from', seg_1_gid)
 
         self.pc.setup_transfer()
 
@@ -370,10 +345,10 @@ class OlfactoryBulb:
         model_inputsegs = self.get_model_inputsegs()
 
         # Get input odor glomeruli
-        glom_intensities = {g.glom_id: g.intensity \
-                            for g in OdorGlom \
-                                .select(OdorGlom.glom_id, OdorGlom.intensity) \
-                                .join(Odor) \
+        glom_intensities = {g.glom_id: g.intensity
+                            for g in OdorGlom
+                                .select(OdorGlom.glom_id, OdorGlom.intensity)
+                                .join(Odor)
                                 .where(Odor.name == odor)}
 
         for glom_id, cells in self.glom_cells.items():
@@ -406,9 +381,9 @@ class OlfactoryBulb:
 
     def get_gaussian_spike_train(self, spikes=50, start_time=100, duration=10):
 
-        # Create a gaussian whose 95% range starts at start_time
+        # Create a gaussian whose 99% range starts at start_time
         # and ends at start_time + duration
-        normal_stdev = duration / (2.96 * 2)
+        normal_stdev = duration / (2.576 * 2)
         normal_mean = start_time + duration / 2.0
 
         times = np.random.normal(start_time + (duration / 2.0), normal_stdev, spikes)
@@ -476,7 +451,7 @@ class OlfactoryBulb:
 
         for cell_model in self.cells[cell_type]:
             v_vec = h.Vector()
-            v_vec.record(cell_model.soma(0.5)._ref_v, 1 / 8.0)
+            v_vec.record(cell_model.soma(0.5)._ref_v, self.params.recording_period)
             self.v_vectors[str(cell_model.soma)] = v_vec
 
     def save_recorded_vectors(self):
@@ -490,7 +465,7 @@ class OlfactoryBulb:
                 for cell, v_vec in rank_v_vecs.items():
                     result.append((cell, t, v_vec.to_python()))
 
-            with open('soma_vs.pkl', 'w') as f:
+            with open(os.path.join(self.results_dir, 'soma_vs.pkl'), 'w') as f:
                 cPickle.dump(result, f)
 
         # Gather input event time vectors
@@ -502,7 +477,7 @@ class OlfactoryBulb:
                 for seg_name, t_vec in rank_input_vecs:
                     result.append((seg_name, t_vec.to_python()))
 
-            with open('input_times.pkl', 'w') as f:
+            with open(os.path.join(self.results_dir, 'input_times.pkl'), 'w') as f:
                 cPickle.dump(result, f)
 
     def get_nseg_count(self, root_dict):

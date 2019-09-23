@@ -4,4 +4,9 @@ if '-mpi' in sys.argv:
 
 from olfactorybulb.model import OlfactoryBulb as OB
 
-ob = OB('TestSlice')
+if '-paramset' in sys.argv:
+    paramset = sys.argv[sys.argv.index("-paramset")+1]
+    ob = OB(paramset)
+
+else:
+    ob = OB()

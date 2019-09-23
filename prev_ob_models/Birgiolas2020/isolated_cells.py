@@ -35,7 +35,7 @@ class OlfactoryBulbCell(IsolatedCell):
 
             if os.path.exists(transformation_file):
                 try:
-                    print('Applying: ' + transformation_file)
+                    # print('Applying: ' + transformation_file)
                     exec ("from " + self.cell_type + "Transforms import Transform" + cell_name + " as Transform")
                     Transform.apply_on(str(self.cell))
                 except:
@@ -65,7 +65,7 @@ class OlfactoryBulbCell(IsolatedCell):
             else:
                 for param_list in self.params[pi]["lists"]:
                     if not hasattr(self.cell, param_list):
-                        print("List",param_list, "not found in cell", self.hoc_template, "Skipping list...")
+                        # print("List",param_list, "not found in cell", self.hoc_template, "Skipping list...")
                         continue
 
                     if attr == "diam":
