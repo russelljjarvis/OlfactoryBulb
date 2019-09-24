@@ -122,8 +122,8 @@ class TwoGammaClusters(MC_TC_Combined_Base):
 class TwoGammaClusters_ExtraSniffs(MC_TC_Combined_Base):
 
     tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.5
-    mc_input_delay = 20
+    mc_input_weight = tc_input_weight * 0.1
+    mc_input_delay = 35
 
     input_odors = {
         0: {"name": "Apple", "rel_conc": 0.1},
@@ -131,7 +131,7 @@ class TwoGammaClusters_ExtraSniffs(MC_TC_Combined_Base):
         400: {"name": "Apple", "rel_conc": 0.2},
         600: {"name": "Apple", "rel_conc": 0.2},
         800: {"name": "Apple", "rel_conc": 0.2},
-        1000: {"name": "Apple", "rel_conc": 0.2}
+        1000: {"name": "Apple", "rel_conc": 0.2},
     }
 
     tstop = 1200
