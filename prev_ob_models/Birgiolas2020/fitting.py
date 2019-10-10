@@ -47,7 +47,13 @@ class CellFitter(object):
 
     def load_model_params(self):
         model_cls = self.import_model_class(self.fitting_model_class)
-        self.params = model_cls.params
+
+        if hasattr(model_cls, 'params'):
+            self.params = model_cls.params
+        else:
+            print(model_cls, 'does not have "params" attribute. No fitting will be performed.')
+            self.params = None
+
 
     def import_model_class(self, model_class):
         # This line takes input like: 'prev_ob_models.BhallaBower1993.isolated_cells.MC' and converts it to:

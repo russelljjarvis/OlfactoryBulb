@@ -13,6 +13,7 @@ from olfactorybulb import slices
 from blenderneuron.blender.utils import fast_get, make_safe_filename
 from blenderneuron.blender.views.vectorconfinerview import VectorConfinerView
 from blenderneuron.blender.views.synapseformerview import SynapseFormerView
+import blenderneuron.blender
 
 '''
 Sources:
@@ -35,8 +36,7 @@ def auto_start(scene):
     # lp.add_function(sbb.add_mc)
     # lp.add_function(sbb.add_tc)
     # lp.add_function(sbb.add_gc)
-    # lp.add_function(sbb.confine_dends)
-    # lp.add_function(VectorConfinerView.confine_between_meshes)
+    # lp.add_function(sbb.import_instance)
     # profiled_build = lp(sbb.build)
     # profiled_build()
     # lp.print_stats()
@@ -61,8 +61,8 @@ class SliceBuilderBlender:
 
     def __init__(self,
                  odors=['Apple'], # use 'all' for all gloms, else e.g. ['Apple', 'Mint']
-                 slice_object_name='TestSlice',
-                 max_mcs=5, max_tcs=10, max_gcs=40,  # Uses mouse ratios if None
+                 slice_object_name='DorsalColumnSlice',
+                 max_mcs=10, max_tcs=None, max_gcs=300,  # Uses mouse ratios if None
                  mc_particles_object_name='2 ML Particles',
                  tc_particles_object_name='1 OPL Particles',
                  gc_particles_object_name='4 GRL Particles',
@@ -136,10 +136,34 @@ class SliceBuilderBlender:
         self.node.groups['TCs'].select_roots('All','TC*')
         self.node.groups['GCs'].select_roots('All','GC*')
 
+        gcs_with_syns = set()
+
+        # Find and save syns in all synapse sets
+        for syn_set in self.node.synapse_sets:
+            file = os.path.join(self.slice_dir, make_safe_filename(syn_set.name)+'.json')
+            print('Saving synapse set "'+syn_set.name+'" saved to: ' + file)
+
+            pairs = syn_set.get_synapse_locations()
+
+            # Note which GCs have synapses
+            for pair in pairs:
+                source_cell = pair.source.section_name[:pair.source.section_name.find(']')+1]
+                gcs_with_syns.add(source_cell)
+
+            syn_set.save_synapses(file)
+
+        # Remove unconnected GCs
+        # they won't contribute to simulation output
+        # removing them makes the simulation smaller
+        self.node.groups['GCs'].include_roots_by_name(
+            [cell + '.soma' for cell in gcs_with_syns],
+            exclude_others=True
+        )
+
         # Save all cells
         for group in self.node.groups.values():
             file = os.path.join(self.slice_dir, make_safe_filename(group.name)+'.json')
-            print('Saving cell group "'+group.name+'" to: ' + file)
+            print('Saving cell group %s %s to: %s'%(len(group.roots.keys()), group.name, file))
             group.to_file(file)
 
         # Save glom-cell associations
@@ -148,15 +172,8 @@ class SliceBuilderBlender:
             print('Saving glomerulus-cells links to: ' + file)
             json.dump(self.glom_cells, f)
 
-        # Find and save syns in all synapse sets
-        for syn_set in self.node.synapse_sets:
-            file = os.path.join(self.slice_dir, make_safe_filename(syn_set.name)+'.json')
-            print('Saving synapse set "'+syn_set.name+'" saved to: ' + file)
-            syn_set.get_synapse_locations()
-            syn_set.save_synapses(file)
-
-        # Show all group cells
-        print('Creating blender scene...')
+        # # Show all group cells
+        # print('Creating blender scene...')
         # bpy.ops.blenderneuron.display_groups()
         print('DONE')
 
@@ -201,9 +218,10 @@ class SliceBuilderBlender:
         # Match e.g. 'MCs.json'
         pattern = re.compile('.+json')
 
-        for file in os.listdir(dir):
-            if pattern.match(file) is not None:
-                os.remove(os.path.abspath(os.path.join(dir, file)))
+        if os.path.exists(dir):
+            for file in os.listdir(dir):
+                if pattern.match(file) is not None:
+                    os.remove(os.path.abspath(os.path.join(dir, file)))
 
     def get_cell_locations(self):
         self.globalize_slice()
@@ -214,9 +232,9 @@ class SliceBuilderBlender:
         self.inner_opl_locs = self.get_opl_locs(self.inner_opl_object_name, self.slice_name)
         self.outer_opl_locs = self.get_opl_locs(self.outer_opl_object_name, self.slice_name)
 
-        self.mc_locs = self.get_locs_within_slice(self.mc_particles_name, self.slice_name)[:self.max_mcs]
-        self.tc_locs = self.get_locs_within_slice(self.tc_particles_name, self.slice_name)[:self.max_tcs]
-        self.gc_locs = self.get_locs_within_slice(self.gc_particles_name, self.slice_name)[:self.max_gcs]
+        self.mc_locs = self.get_locs_within_slice(self.mc_particles_name, self.slice_name, limit=self.max_mcs)
+        self.tc_locs = self.get_locs_within_slice(self.tc_particles_name, self.slice_name, limit=self.max_tcs)
+        self.gc_locs = self.get_locs_within_slice(self.gc_particles_name, self.slice_name, limit=self.max_gcs)
 
         print('Gloms:', len(self.glom_locs))
         print('TCs:', len(self.tc_locs))
@@ -277,8 +295,9 @@ class SliceBuilderBlender:
             group.record_activity = False
 
         # Add some color
-        groups[1].default_color = [1, 0, 0]
-        groups[2].default_color = [0, 0, 1]
+        groups[0].default_color = [0.15, 0.71, 0.96]       # MCs - neon blue
+        groups[1].default_color = [1,    0.73, 0.82]       # TCs - pink
+        groups[2].default_color = [1,    0.80, 0.11]       # GCs - gold
 
     def globalize_slice(self):
         # Apply all/any transformations to the slice
@@ -571,7 +590,7 @@ class SliceBuilderBlender:
     def dist_to(targets_array, loc):
         return np.sqrt(np.sum(np.square(targets_array - loc), axis=1))
 
-    def get_locs_within_slice(self, particle_obj_name, slice_obj_name, allowed_particles=None):
+    def get_locs_within_slice(self, particle_obj_name, slice_obj_name, allowed_particles=None, limit=None):
         particles_obj = bpy.data.objects[particle_obj_name]
         particles = particles_obj.particle_systems[0].particles
         particles_wm = particles_obj.matrix_world
@@ -581,6 +600,10 @@ class SliceBuilderBlender:
                            for pid, ptc in enumerate(particles)
                            if (allowed_particles is None or pid in allowed_particles) and
                            self.is_inside(particles_wm * ptc.location, slice_obj)]
+
+        if limit is not None:
+            print('Selecting %s/%s %s locations inside slice'%(limit, len(result), particle_obj_name))
+            result = result[:limit]
 
         return result
 

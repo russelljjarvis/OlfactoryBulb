@@ -122,7 +122,7 @@ class TwoGammaClusters(MC_TC_Combined_Base):
 class TwoGammaClusters_ExtraSniffs(MC_TC_Combined_Base):
 
     tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.1
+    mc_input_weight = tc_input_weight * 1
     mc_input_delay = 35
 
     input_odors = {

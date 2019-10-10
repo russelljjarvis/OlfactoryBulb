@@ -21,7 +21,7 @@ from olfactorybulb.paramsets.network_props import *
 
 
 class OlfactoryBulb:
-    def __init__(self, params="ParameterSetBase"):
+    def __init__(self, params="ParameterSetBase", autorun=True):
         if type(params) == str:
             params = eval(params)()
 
@@ -105,22 +105,23 @@ class OlfactoryBulb:
             h.newPlotI()
             [g for g in h.Graph][-1].addvar('LfpElectrode[0].value')
 
-        self.run(params.tstop)
+        if autorun:
+            self.run(params.tstop)
 
-        if self.mpirank == 0:
-            self.results_dir = os.path.join('olfactorybulb', 'results', params.name)
-            if not os.path.exists(self.results_dir):
-                os.makedirs(self.results_dir)
+            if self.mpirank == 0:
+                self.results_dir = os.path.join('olfactorybulb', 'results', params.name)
+                if not os.path.exists(self.results_dir):
+                    os.makedirs(self.results_dir)
 
-        self.save_recorded_vectors()
+            self.save_recorded_vectors()
 
-        if self.mpirank == 0:
-            t, lfp = self.get_lfp()
+            if self.mpirank == 0:
+                t, lfp = self.get_lfp()
 
-        # Cleanup on MPI
-        if self.nranks > 1:
-            database.close()
-            self.h.quit()
+            # Cleanup on MPI
+            if self.nranks > 1:
+                database.close()
+                self.h.quit()
 
 
     def stim_glom_segments(self, time, input_segs, intensity):

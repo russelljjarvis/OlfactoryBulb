@@ -11,7 +11,7 @@ class SilentNetwork:
     rnd_seed = 0
 
     slice_dir = os.path.join('olfactorybulb', 'slices')
-    slice_name = "TestSlice"
+    slice_name = "DorsalColumnSlice"
 
     sim_dt = 1 / 10.0
 
