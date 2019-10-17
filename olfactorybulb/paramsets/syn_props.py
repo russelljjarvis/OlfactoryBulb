@@ -431,6 +431,25 @@ class MCsWithGJsGCsTau2_10(MCsWithGJsGCs):
     }
 
 
+class MCsWithGJsGCsTau2_50(MCsWithGJsGCs):
+    synapse_properties = {
+        "AmpaNmdaSyn": {
+            'gmax': 500,
+
+            'ltpinvl': 0,  # Disable plasticity
+            'ltdinvl': 0
+        },
+
+        "GabaSyn": {
+            'gmax': 2,
+            'tau2': 50,
+
+            'ltpinvl': 0,  # Disable plasticity
+            'ltdinvl': 0
+        }
+    }
+
+
 class MCsWithGJsGCsTau2_100(MCsWithGJsGCs):
     synapse_properties = {
         "AmpaNmdaSyn": {
@@ -443,6 +462,25 @@ class MCsWithGJsGCsTau2_100(MCsWithGJsGCs):
         "GabaSyn": {
             'gmax': 2,
             'tau2': 100,
+
+            'ltpinvl': 0,  # Disable plasticity
+            'ltdinvl': 0
+        }
+    }
+
+
+class MCsWithGJsGCsTau2_500(MCsWithGJsGCs):
+    synapse_properties = {
+        "AmpaNmdaSyn": {
+            'gmax': 500,
+
+            'ltpinvl': 0,  # Disable plasticity
+            'ltdinvl': 0
+        },
+
+        "GabaSyn": {
+            'gmax': 2,
+            'tau2': 500,
 
             'ltpinvl': 0,  # Disable plasticity
             'ltdinvl': 0
@@ -507,6 +545,25 @@ class TCsWithGJsGCsTau2_10(TCsWithGJsGCs):
     }
 
 
+class TCsWithGJsGCsTau2_50(TCsWithGJsGCs):
+    synapse_properties = {
+        "AmpaNmdaSyn": {
+            'gmax': 500,
+
+            'ltpinvl': 0,  # Disable plasticity
+            'ltdinvl': 0
+        },
+
+        "GabaSyn": {
+            'gmax': 2,
+            'tau2': 50,
+
+            'ltpinvl': 0,  # Disable plasticity
+            'ltdinvl': 0
+        }
+    }
+
+
 class TCsWithGJsGCsTau2_100(TCsWithGJsGCs):
     synapse_properties = {
         "AmpaNmdaSyn": {
@@ -519,6 +576,25 @@ class TCsWithGJsGCsTau2_100(TCsWithGJsGCs):
         "GabaSyn": {
             'gmax': 2,
             'tau2': 100,
+
+            'ltpinvl': 0,  # Disable plasticity
+            'ltdinvl': 0
+        }
+    }
+
+
+class TCsWithGJsGCsTau2_500(TCsWithGJsGCs):
+    synapse_properties = {
+        "AmpaNmdaSyn": {
+            'gmax': 500,
+
+            'ltpinvl': 0,  # Disable plasticity
+            'ltdinvl': 0
+        },
+
+        "GabaSyn": {
+            'gmax': 2,
+            'tau2': 500,
 
             'ltpinvl': 0,  # Disable plasticity
             'ltdinvl': 0

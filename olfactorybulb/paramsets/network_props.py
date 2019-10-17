@@ -1,163 +1,56 @@
 from olfactorybulb.paramsets.case_studies import *
 
-# MC weight at delay=50
-class MC_TC_Combined_MC_weight_0(MC_TC_Combined_Base):
+# delay 20, 30, 40
+# weight 0.25, 0.5, 0.75
+
+class MC_TC_Combined_MC_weight_025_delay_20(MC_TC_Combined_Base):
     tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0
-
-class MC_TC_Combined_MC_weight_001(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.01
-
-class MC_TC_Combined_MC_weight_010(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.1
-
-class MC_TC_Combined_MC_weight_020(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.2
-
-class MC_TC_Combined_MC_weight_050(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.5
-
-class MC_TC_Combined_MC_weight_080(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.8
-
-class MC_TC_Combined_MC_weight_100(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 1
-
-
-# -------- MC delay at weight 1--------- #
-class MC_TC_Combined_MC_delay_0(MC_TC_Combined_Base):
-    mc_input_delay = 0
-
-
-class MC_TC_Combined_MC_delay_10(MC_TC_Combined_Base):
-    mc_input_delay = 10
-
-
-class MC_TC_Combined_MC_delay_20(MC_TC_Combined_Base):
-    mc_input_delay = 20
-
-
-class MC_TC_Combined_MC_delay_30(MC_TC_Combined_Base):
-    mc_input_delay = 30
-
-
-class MC_TC_Combined_MC_delay_40(MC_TC_Combined_Base):
-    mc_input_delay = 40
-
-
-class MC_TC_Combined_MC_delay_50(MC_TC_Combined_Base):
-    mc_input_delay = 50
-
-
-class MC_TC_Combined_MC_delay_70(MC_TC_Combined_Base):
-    mc_input_delay = 70
-
-
-
-# ------- MC Weight at Delay = 20 ------------ #
-class MC_TC_Combined_MC_weight_0_delay_20(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0
-    mc_input_delay = 20
-
-class MC_TC_Combined_MC_weight_001_delay_20(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.01
-    mc_input_delay = 20
-
-class MC_TC_Combined_MC_weight_010_delay_20(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.1
-    mc_input_delay = 20
-
-class MC_TC_Combined_MC_weight_020_delay_20(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.2
+    mc_input_weight = tc_input_weight * 0.25
     mc_input_delay = 20
 
 class MC_TC_Combined_MC_weight_050_delay_20(MC_TC_Combined_Base):
     tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.5
+    mc_input_weight = tc_input_weight * 0.50
     mc_input_delay = 20
 
-    input_odors = {
-        0: {"name": "Apple", "rel_conc": 0.1},
-        200: {"name": "Apple", "rel_conc": 0.2},
-        400: {"name": "Apple", "rel_conc": 0.2},
-        600: {"name": "Apple", "rel_conc": 0.2},
-        800: {"name": "Apple", "rel_conc": 0.2},
-        1000: {"name": "Apple", "rel_conc": 0.2}
-    }
-
-    tstop = 1200
-
-
-class MC_TC_Combined_MC_weight_080_delay_20(MC_TC_Combined_Base):
+class MC_TC_Combined_MC_weight_075_delay_20(MC_TC_Combined_Base):
     tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.8
+    mc_input_weight = tc_input_weight * 0.75
     mc_input_delay = 20
 
-class MC_TC_Combined_MC_weight_100_delay_20(MC_TC_Combined_Base):
+class MC_TC_Combined_MC_weight_025_delay_30(MC_TC_Combined_Base):
     tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 1
-    mc_input_delay = 20
-
-# ------- MC Weight at Delay = 30 ------------ #
-class MC_TC_Combined_MC_weight_0_delay_30(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0
-    mc_input_delay = 30
-
-class MC_TC_Combined_MC_weight_001_delay_30(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.01
-    mc_input_delay = 30
-
-class MC_TC_Combined_MC_weight_010_delay_30(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.1
-    mc_input_delay = 30
-
-    input_odors = {
-        0: {"name": "Apple", "rel_conc": 0.1},
-        200: {"name": "Apple", "rel_conc": 0.2},
-        400: {"name": "Apple", "rel_conc": 0.2},
-        600: {"name": "Apple", "rel_conc": 0.2},
-        800: {"name": "Apple", "rel_conc": 0.2},
-        1000: {"name": "Apple", "rel_conc": 0.2}
-    }
-
-    tstop = 1200
-
-class MC_TC_Combined_MC_weight_020_delay_30(MC_TC_Combined_Base):
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.2
+    mc_input_weight = tc_input_weight * 0.25
     mc_input_delay = 30
 
 class MC_TC_Combined_MC_weight_050_delay_30(MC_TC_Combined_Base):
     tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.5
+    mc_input_weight = tc_input_weight * 0.50
     mc_input_delay = 30
 
-class MC_TC_Combined_MC_weight_080_delay_30(MC_TC_Combined_Base):
+class MC_TC_Combined_MC_weight_075_delay_30(MC_TC_Combined_Base):
     tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.8
+    mc_input_weight = tc_input_weight * 0.75
     mc_input_delay = 30
 
-class MC_TC_Combined_MC_weight_100_delay_30(MC_TC_Combined_Base):
+class MC_TC_Combined_MC_weight_025_delay_40(MC_TC_Combined_Base):
     tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 1
-    mc_input_delay = 30
+    mc_input_weight = tc_input_weight * 0.25
+    mc_input_delay = 40
+
+class MC_TC_Combined_MC_weight_050_delay_40(MC_TC_Combined_Base):
+    tc_input_weight = 1.0
+    mc_input_weight = tc_input_weight * 0.50
+    mc_input_delay = 40
+
+class MC_TC_Combined_MC_weight_075_delay_40(MC_TC_Combined_Base):
+    tc_input_weight = 1.0
+    mc_input_weight = tc_input_weight * 0.75
+    mc_input_delay = 40
 
 
 # Effect of Gaba gmax on TCMC clusters #
-class TwoGammaClusters_InhibGmax_00(TwoGammaClusters):
+class GammaSignature_InhibGmax_00(GammaSignature):
 
     synapse_properties = {
         "AmpaNmdaSyn": {
@@ -176,7 +69,7 @@ class TwoGammaClusters_InhibGmax_00(TwoGammaClusters):
         }
     }
 
-class TwoGammaClusters_InhibGmax_05(TwoGammaClusters):
+class GammaSignature_InhibGmax_05(GammaSignature):
 
     synapse_properties = {
         "AmpaNmdaSyn": {
@@ -195,7 +88,7 @@ class TwoGammaClusters_InhibGmax_05(TwoGammaClusters):
         }
     }
 
-class TwoGammaClusters_InhibGmax_10(TwoGammaClusters):
+class GammaSignature_InhibGmax_10(GammaSignature):
 
     synapse_properties = {
         "AmpaNmdaSyn": {
@@ -214,7 +107,7 @@ class TwoGammaClusters_InhibGmax_10(TwoGammaClusters):
         }
     }
 
-class TwoGammaClusters_InhibGmax_15(TwoGammaClusters):
+class GammaSignature_InhibGmax_15(GammaSignature):
 
     synapse_properties = {
         "AmpaNmdaSyn": {
@@ -233,7 +126,7 @@ class TwoGammaClusters_InhibGmax_15(TwoGammaClusters):
         }
     }
 
-class TwoGammaClusters_InhibGmax_20(TwoGammaClusters):
+class GammaSignature_InhibGmax_20(GammaSignature):
 
     synapse_properties = {
         "AmpaNmdaSyn": {
@@ -252,7 +145,7 @@ class TwoGammaClusters_InhibGmax_20(TwoGammaClusters):
         }
     }
 
-class TwoGammaClusters_InhibGmax_30(TwoGammaClusters):
+class GammaSignature_InhibGmax_30(GammaSignature):
 
     synapse_properties = {
         "AmpaNmdaSyn": {

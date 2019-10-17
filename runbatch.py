@@ -1,58 +1,69 @@
 import os
 
-# paramsets = ['PureMCs',        'PureTCs']
-# paramsets = ['PureMCsWithGJs', 'PureTCsWithGJs']
+# Compute isolated MCs or TCs and effect of GJ conductance on each
+paramsets = [ 'PureMCs', 'PureTCs',
+             'MCGJ_0', 'MCGJ_2', 'MCGJ_4', 'MCGJ_8', 'MCGJ_16', 'MCGJ_32',
+             'TCGJ_0', 'TCGJ_2', 'TCGJ_4', 'TCGJ_8', 'TCGJ_16', 'TCGJ_32']
 
-# paramsets = ['MCGJ_0', 'MCGJ_2', 'MCGJ_4', 'MCGJ_8', 'MCGJ_16', 'MCGJ_32',
-#              'TCGJ_0', 'TCGJ_2', 'TCGJ_4', 'TCGJ_8', 'TCGJ_16', 'TCGJ_32']
+# Select GJ conductance and then add GC inhibition
+paramsets = ['PureMCsWithGJs', 'PureTCsWithGJs']
+
+# Explore effect of exciting GCs by either MCs or TCs
+paramsets = ['MCsWithGJsGCsExc_0', 'MCsWithGJsGCsExc_10', 'MCsWithGJsGCsExc_100', 'MCsWithGJsGCsExc_1000', 'MCsWithGJsGCsExc_10000',
+             'TCsWithGJsGCsExc_0', 'TCsWithGJsGCsExc_10', 'TCsWithGJsGCsExc_100', 'TCsWithGJsGCsExc_1000', 'TCsWithGJsGCsExc_10000',]
+
+# Explore effect of inhibition of MCs or TCs
+paramsets = ['MCsWithGJsGCsInhib_0',
+                'MCsWithGJsGCsInhib_1',
+                'MCsWithGJsGCsInhib_2',
+                'MCsWithGJsGCsInhib_4',
+                'MCsWithGJsGCsInhib_8',
+
+                'TCsWithGJsGCsInhib_0',
+                'TCsWithGJsGCsInhib_1',
+                'TCsWithGJsGCsInhib_2',
+                'TCsWithGJsGCsInhib_4',
+                'TCsWithGJsGCsInhib_8',]
+
+# Explore effect of inhibitory time constant
+paramsets = [
+                'MCsWithGJsGCsTau2_1',
+                'MCsWithGJsGCsTau2_10',
+                'MCsWithGJsGCsTau2_50',
+                'MCsWithGJsGCsTau2_100',
+                'MCsWithGJsGCsTau2_500',
+                'MCsWithGJsGCsTau2_1000',
 
 
-# paramsets = ['MCsWithGJsGCs', 'TCsWithGJsGCs']
+                'TCsWithGJsGCsTau2_1',
+                'TCsWithGJsGCsTau2_10',
+                'TCsWithGJsGCsTau2_50',
+                'TCsWithGJsGCsTau2_100',
+                'TCsWithGJsGCsTau2_500',
+                'TCsWithGJsGCsTau2_1000',]
 
-# paramsets = ['MCsWithGJsGCsExc_0', 'MCsWithGJsGCsExc_10', 'MCsWithGJsGCsExc_100', 'MCsWithGJsGCsExc_1000', 'MCsWithGJsGCsExc_10000',
-#              'TCsWithGJsGCsExc_0', 'TCsWithGJsGCsExc_10', 'TCsWithGJsGCsExc_100', 'TCsWithGJsGCsExc_1000', 'TCsWithGJsGCsExc_10000',]
 
 
-# paramsets = ['MCsWithGJsGCsInhib_0',
-#                 'MCsWithGJsGCsInhib_1',
-#                 'MCsWithGJsGCsInhib_2',
-#                 'MCsWithGJsGCsInhib_4',
-#                 'MCsWithGJsGCsInhib_8',
-#
-#                 'TCsWithGJsGCsInhib_0',
-#                 'TCsWithGJsGCsInhib_1',
-#                 'TCsWithGJsGCsInhib_2',
-#                 'TCsWithGJsGCsInhib_4',
-#                 'TCsWithGJsGCsInhib_8',]
+# Select exc and inhibit gmax and taus
+paramsets = ['MCsWithGJsGCs', 'TCsWithGJsGCs']
 
-# paramsets = [
-#                 'MCsWithGJsGCsTau2_1',
-#                 'MCsWithGJsGCsTau2_10',
-#                 'MCsWithGJsGCsTau2_100',
-#                 'MCsWithGJsGCsTau2_1000',
-#
-#
-#                 'TCsWithGJsGCsTau2_1',
-#                 'TCsWithGJsGCsTau2_10',
-#                 'TCsWithGJsGCsTau2_100',
-#                 'TCsWithGJsGCsTau2_1000',]
+# Combine MC and TC network and explore effect of MC input weight and delay
+paramsets = [   'MC_TC_Combined_MC_weight_025_delay_20',
+                'MC_TC_Combined_MC_weight_050_delay_20',
+                'MC_TC_Combined_MC_weight_075_delay_20',
 
-# paramsets = ['MC_TC_Combined_MC_weight_0',
-#             'MC_TC_Combined_MC_weight_001',
-#             'MC_TC_Combined_MC_weight_010',
-#             'MC_TC_Combined_MC_weight_020',
-#             'MC_TC_Combined_MC_weight_050',
-#             'MC_TC_Combined_MC_weight_080',
-#             'MC_TC_Combined_MC_weight_100',
-#
-#             'MC_TC_Combined_MC_delay_0',
-#             'MC_TC_Combined_MC_delay_10',
-#             'MC_TC_Combined_MC_delay_20',
-#             'MC_TC_Combined_MC_delay_30',
-#             'MC_TC_Combined_MC_delay_40',
-#             'MC_TC_Combined_MC_delay_50',
-#             'MC_TC_Combined_MC_delay_70',]
+                'MC_TC_Combined_MC_weight_025_delay_30',
+                'MC_TC_Combined_MC_weight_050_delay_30',
+                'MC_TC_Combined_MC_weight_075_delay_30',
 
+                'MC_TC_Combined_MC_weight_025_delay_40',
+                'MC_TC_Combined_MC_weight_050_delay_40',
+                'MC_TC_Combined_MC_weight_075_delay_40',]
+
+
+
+# Select MC delay and weight
+paramsets = ['GammaSignature']
 
 # paramsets = [
 #     'MC_TC_Combined_MC_weight_0_delay_20',
@@ -73,14 +84,14 @@ import os
 # ]
 
 
-paramsets = [
-    'TwoGammaClusters_InhibGmax_00',
-    'TwoGammaClusters_InhibGmax_05',
-    'TwoGammaClusters_InhibGmax_10',
-    'TwoGammaClusters_InhibGmax_15',
-    'TwoGammaClusters_InhibGmax_20',
-    'TwoGammaClusters_InhibGmax_30'
-]
+# paramsets = [
+#     'GammaSignature_InhibGmax_00',
+#     'GammaSignature_InhibGmax_05',
+#     'GammaSignature_InhibGmax_10',
+#     'GammaSignature_InhibGmax_15',
+#     'GammaSignature_InhibGmax_20',
+#     'GammaSignature_InhibGmax_30'
+# ]
 
 for i, params in enumerate(paramsets):
     print('Starting paramset: ' + params + ' (%s/%s)...' % (i+1, len(paramsets)))

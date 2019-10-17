@@ -150,7 +150,7 @@ class OlfactoryBulb:
             syn.tau1 = self.params.input_syn_tau1
             syn.tau2 = self.params.input_syn_tau2
 
-            if "MC" in seg_name:  # MCs -- reduced ORN input
+            if "MC" in seg_name:  # MCs
                 delay = self.params.mc_input_delay
                 weight = self.params.mc_input_weight
 

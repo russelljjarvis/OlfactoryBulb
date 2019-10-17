@@ -15,7 +15,7 @@ class PureMCsWithGJs(SilentNetwork):
     description = "Pure MC input and enabled gap junctions"
 
     gap_juction_gmax = {
-        "MC": 10,
+        "MC": 16,
         # "TC": 0,
     }
 
@@ -27,7 +27,7 @@ class PureTCsWithGJs(SilentNetwork):
 
     gap_juction_gmax = {
         # "MC": 0,
-        "TC": 10,
+        "TC": 16,
     }
 
     tc_input_weight = 1.0
@@ -35,7 +35,7 @@ class PureTCsWithGJs(SilentNetwork):
 class MCsWithGJsGCs(SilentNetwork):
 
     gap_juction_gmax = {
-        "MC": 8,
+        "MC": 16,
     }
 
     mc_input_weight = 1.0
@@ -60,7 +60,7 @@ class MCsWithGJsGCs(SilentNetwork):
 class TCsWithGJsGCs(SilentNetwork):
 
     gap_juction_gmax = {
-        "TC": 8,
+        "TC": 16,
     }
 
     tc_input_weight = 1.0
@@ -87,8 +87,8 @@ class TCsWithGJsGCs(SilentNetwork):
 class MC_TC_Combined_Base(SilentNetwork):
 
     gap_juction_gmax = {
-        "MC": 8,
-        "TC": 8,
+        "MC": 16,
+        "TC": 16,
     }
 
     mc_input_weight = 1.0
@@ -103,7 +103,7 @@ class MC_TC_Combined_Base(SilentNetwork):
         },
 
         "GabaSyn": {
-            'gmax': 3,
+            'gmax': 2,
             'tau2': 100,
 
             'ltpinvl': 0,  # Disable plasticity
@@ -111,27 +111,8 @@ class MC_TC_Combined_Base(SilentNetwork):
         }
     }
 
-class TwoGammaClusters(MC_TC_Combined_Base):
+class GammaSignature(MC_TC_Combined_Base):
 
     tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 0.5
+    mc_input_weight = tc_input_weight * 0.75
     mc_input_delay = 20
-
-
-
-class TwoGammaClusters_ExtraSniffs(MC_TC_Combined_Base):
-
-    tc_input_weight = 1.0
-    mc_input_weight = tc_input_weight * 1
-    mc_input_delay = 35
-
-    input_odors = {
-        0: {"name": "Apple", "rel_conc": 0.1},
-        200: {"name": "Apple", "rel_conc": 0.2},
-        400: {"name": "Apple", "rel_conc": 0.2},
-        600: {"name": "Apple", "rel_conc": 0.2},
-        800: {"name": "Apple", "rel_conc": 0.2},
-        1000: {"name": "Apple", "rel_conc": 0.2},
-    }
-
-    tstop = 1200

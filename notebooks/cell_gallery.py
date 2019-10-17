@@ -8,8 +8,8 @@ from blenderneuron import neuronstart
 from prev_ob_models.Birgiolas2020.isolated_cells import *
 from neuron import h, gui
 
-cells = [#MC1(),MC2(), MC3(), MC4(), MC5(), ]
-#         TC1(), TC2(), TC3(), TC4(), TC5(), ]
+cells = [MC1(),MC2(), MC3(), MC4(), MC5(), 
+         TC1(), TC2(), TC3(), TC4(), TC5(), 
          GC1(), GC2(), GC3(), GC4(), GC5()]
 
 ics = [h.IClamp(0.5, sec=cell.soma) for cell in cells]
