@@ -18,6 +18,7 @@ from olfactorybulb.paramsets.case_studies import *
 from olfactorybulb.paramsets.gj_g import *
 from olfactorybulb.paramsets.syn_props import *
 from olfactorybulb.paramsets.network_props import *
+from olfactorybulb.paramsets.experiments import *
 
 
 class OlfactoryBulb:
@@ -32,6 +33,9 @@ class OlfactoryBulb:
         self.slice_dir = os.path.abspath(os.path.join(params.slice_dir, params.slice_name))
         self.cells = {}
         self.inputs = []
+
+        self.gj_source_gids = set()
+        self.gjs = []
 
         # Just use the BlenderNEURON package functions (e.g. no server/client)
         self.bn_server = NeuronNode(end='Package')
@@ -260,8 +264,6 @@ class OlfactoryBulb:
         return model_inputsegs
 
     def add_gap_junctions(self, in_name, g_gap):
-        self.gj_source_gids = set()
-        self.gjs = []
 
         model_inputsegs = self.get_model_inputsegs()
 
@@ -289,6 +291,8 @@ class OlfactoryBulb:
 
             if len(input_segs) > 0:
                 self.create_gap_junctions_between(input_segs, g_gap)
+
+        self.pc.setup_transfer()
 
     def create_gap_junctions_between(self, input_segs, g_gap):
         count = len(input_segs)
@@ -339,7 +343,7 @@ class OlfactoryBulb:
             self.pc.target_var(gap2._ref_v_other, seg_1_gid)
             self.gjs.append(gap2)
 
-        self.pc.setup_transfer()
+
 
     def add_inputs(self, odor, t, rel_conc):
 

@@ -48,7 +48,13 @@ class SilentNetwork:
         0:   {"name": "Apple", "rel_conc": 0.1},
         200: {"name": "Apple", "rel_conc": 0.2},
         400: {"name": "Apple", "rel_conc": 0.2},
-        600: {"name": "Apple", "rel_conc": 0.2}
+        600: {"name": "Apple", "rel_conc": 0.2},
+        800: {"name": "Apple", "rel_conc": 0.2},
+        1000: {"name": "Apple", "rel_conc": 0.2},
+        1200: {"name": "Apple", "rel_conc": 0.2},
+        1400: {"name": "Apple", "rel_conc": 0.2},
+        1600: {"name": "Apple", "rel_conc": 0.2},
+        1800: {"name": "Apple", "rel_conc": 0.2},
     }
 
     # From Manabe & Mori (2013) fast: 100-150ms, slow: 150 ms

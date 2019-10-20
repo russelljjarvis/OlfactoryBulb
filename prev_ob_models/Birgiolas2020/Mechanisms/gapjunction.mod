@@ -12,11 +12,11 @@ UNITS {
 
 	(nA) = (nanoamp)
 	(mV) = (millivolt)
-	(pS) = (picosiemens)
+	(uS) = (microsiemens)
 }
 
 PARAMETER {
-    g = 0 (pS)
+    g = 0 (uS)
 }
 
 ASSIGNED {

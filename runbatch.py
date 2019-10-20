@@ -62,36 +62,28 @@ paramsets = [   'MC_TC_Combined_MC_weight_025_delay_20',
 
 
 
-# Select MC delay and weight
-paramsets = ['GammaSignature']
+# # Select MC delay and weight
+# paramsets = ['GammaSignature']
 
+# # Effect of mc delay
 # paramsets = [
-#     'MC_TC_Combined_MC_weight_0_delay_20',
-#     'MC_TC_Combined_MC_weight_001_delay_20',
-#     'MC_TC_Combined_MC_weight_010_delay_20',
-#     'MC_TC_Combined_MC_weight_020_delay_20',
-#     'MC_TC_Combined_MC_weight_050_delay_20',
-#     'MC_TC_Combined_MC_weight_080_delay_20',
-#     'MC_TC_Combined_MC_weight_100_delay_20',
-#
-#     'MC_TC_Combined_MC_weight_0_delay_30',
-#     'MC_TC_Combined_MC_weight_001_delay_30',
-#     'MC_TC_Combined_MC_weight_010_delay_30',
-#     'MC_TC_Combined_MC_weight_020_delay_30',
-#     'MC_TC_Combined_MC_weight_050_delay_30',
-#     'MC_TC_Combined_MC_weight_080_delay_30',
-#     'MC_TC_Combined_MC_weight_100_delay_30',
+#     # 'GammaSignature_delay_0',
+#     # 'GammaSignature_delay_10',
+#     # 'GammaSignature_delay_20',
+#     # 'GammaSignature_delay_35',
+#     'GammaSignature_delay_40',
+#     'GammaSignature_delay_60',
 # ]
 
-
+# # Effect of MC input weight
 # paramsets = [
-#     'GammaSignature_InhibGmax_00',
-#     'GammaSignature_InhibGmax_05',
-#     'GammaSignature_InhibGmax_10',
-#     'GammaSignature_InhibGmax_15',
-#     'GammaSignature_InhibGmax_20',
-#     'GammaSignature_InhibGmax_30'
+#     'GammaSignature_MC_weight_0',
+#     'GammaSignature_MC_weight_025',
+#     'GammaSignature_MC_weight_050',
+#     'GammaSignature_MC_weight_075',
+#     'GammaSignature_MC_weight_100',
 # ]
+
 
 for i, params in enumerate(paramsets):
     print('Starting paramset: ' + params + ' (%s/%s)...' % (i+1, len(paramsets)))
