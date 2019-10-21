@@ -15,7 +15,7 @@ class PureMCsWithGJs(SilentNetwork):
     description = "Pure MC input and enabled gap junctions"
 
     gap_juction_gmax = {
-        "MC": 4,
+        "MC": 32,
         # "TC": 0,
     }
 
@@ -27,7 +27,7 @@ class PureTCsWithGJs(SilentNetwork):
 
     gap_juction_gmax = {
         # "MC": 0,
-        "TC": 4,
+        "TC": 32,
     }
 
     tc_input_weight = 1.0
@@ -35,7 +35,7 @@ class PureTCsWithGJs(SilentNetwork):
 class MCsWithGJsGCs(SilentNetwork):
 
     gap_juction_gmax = {
-        "MC": 4,
+        "MC": 32,
     }
 
     mc_input_weight = 1.0
@@ -51,8 +51,8 @@ class MCsWithGJsGCs(SilentNetwork):
         },
 
         "GabaSyn": {
-            'gmax': 0,
-            'tau2': 64,
+            'gmax': 2,
+            'tau2': 16,
 
             'ltpinvl': 0,  # Disable plasticity
             'ltdinvl': 0
@@ -76,8 +76,8 @@ class TCsWithGJsGCs(SilentNetwork):
         },
 
         "GabaSyn": {
-            'gmax': 0,
-            'tau2': 64,
+            'gmax': 2,
+            'tau2': 16,
 
             'ltpinvl': 0,  # Disable plasticity
             'ltdinvl': 0
@@ -98,7 +98,7 @@ class MC_TC_Combined_Base(TCsWithGJsGCs):
 
 class GammaSignature(MC_TC_Combined_Base):
 
-    sniffs = 3
+    sniffs = 8
     tstop = (1+sniffs) * 200
 
     tc_input_weight = 0.8
@@ -115,9 +115,119 @@ class GammaSignature(MC_TC_Combined_Base):
 
         "GabaSyn": {
             'gmax': 2,
-            'tau2': 16,
+            'tau2': 36,
 
             'ltpinvl': 0,  # Disable plasticity
             'ltdinvl': 0
         }
     }
+
+
+# Experiments
+
+class GammaSignature_NoInhibition(GammaSignature):
+
+    description = "Disabling inhibition should advance MC first spike times"
+
+    def __init__(self):
+        self.synapse_properties["GabaSyn"]["gmax"] = 0
+
+class GammaSignature_NoTCGJs(GammaSignature):
+
+    description = "Disabling TC GJs should abolish synchronized early TC firing"
+
+    def __init__(self):
+        self.gap_juction_gmax["TC"] = 0
+
+
+class GammaSignature_NoMCGJs(GammaSignature):
+
+    description = "Disabling MC GJs should abolish synchronized late MC firing"
+
+    def __init__(self):
+        self.gap_juction_gmax["MC"] = 0
+
+
+class GammaSignature_EqualTCMCInputs(GammaSignature):
+
+    description = "Increasing MC input weight to match TCs should advance MC first spike times"
+
+    tc_input_weight = 0.8
+    mc_input_weight = 0.8
+
+
+
+class GammaSignature_DifferentOdor(GammaSignature):
+
+    input_odors = {
+        0:   {"name": "Apple", "rel_conc": 0.1},
+        200: {"name": "Coffee", "rel_conc": 0.2},
+        400: {"name": "Mint", "rel_conc": 0.2},
+        600: {"name": "Apple", "rel_conc": 0.2},
+        800: {"name": "Mint", "rel_conc": 0.2},
+        1000: {"name": "Coffee", "rel_conc": 0.2},
+        1200: {"name": "Apple", "rel_conc": 0.2},
+        1400: {"name": "Mint", "rel_conc": 0.2},
+        1600: {"name": "Mint", "rel_conc": 0.2},
+        1800: {"name": "Apple", "rel_conc": 0.2}
+    }
+
+
+class GammaSignature_DifferentOdorConc(GammaSignature):
+
+    input_odors = {
+        0:   {"name": "Apple", "rel_conc": 0.1},
+        200: {"name": "Apple", "rel_conc": 0.05},
+        400: {"name": "Apple", "rel_conc": 0.1},
+        600: {"name": "Apple", "rel_conc": 0.15},
+        800: {"name": "Apple", "rel_conc": 0.20},
+        1000: {"name": "Apple", "rel_conc": 0.25},
+        1200: {"name": "Apple", "rel_conc": 0.30},
+        1400: {"name": "Apple", "rel_conc": 0.35},
+        1600: {"name": "Apple", "rel_conc": 0.4},
+        1800: {"name": "Apple", "rel_conc": 0.45},
+    }
+
+class GammaSignature_GABAtau5(GammaSignature):
+
+    description = "Decreasing GABA tau should reduce time between clusters"
+
+    def __init__(self):
+        self.synapse_properties["GabaSyn"]["tau2"] = 5
+
+
+class GammaSignature_GABAtau15(GammaSignature):
+
+    description = "Decreasing GABA tau should reduce time between clusters"
+
+    def __init__(self):
+        self.synapse_properties["GabaSyn"]["tau2"] = 15
+
+class GammaSignature_GABAtau25(GammaSignature):
+
+    description = "Increasing GABA tau should increase time between clusters"
+
+    def __init__(self):
+        self.synapse_properties["GabaSyn"]["tau2"] = 25
+
+
+class GammaSignature_GABAtau50(GammaSignature):
+
+    description = "Increasing GABA tau should increase time between clusters"
+
+    def __init__(self):
+        self.synapse_properties["GabaSyn"]["tau2"] = 50
+
+class GammaSignature_GABAtau100(GammaSignature):
+
+    description = "Increasing GABA tau should increase time between clusters"
+
+    def __init__(self):
+        self.synapse_properties["GabaSyn"]["tau2"] = 100
+
+class GammaSignature_GABAtau150(GammaSignature):
+
+    description = "Increasing GABA tau should increase time between clusters"
+
+    def __init__(self):
+        self.synapse_properties["GabaSyn"]["tau2"] = 150
