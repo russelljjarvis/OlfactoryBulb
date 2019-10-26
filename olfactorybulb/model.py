@@ -15,10 +15,7 @@ from random import random, seed
 
 from olfactorybulb.paramsets.base import *
 from olfactorybulb.paramsets.case_studies import *
-from olfactorybulb.paramsets.gj_g import *
-from olfactorybulb.paramsets.syn_props import *
-from olfactorybulb.paramsets.network_props import *
-from olfactorybulb.paramsets.experiments import *
+from olfactorybulb.paramsets.sensitivity import *
 
 
 class OlfactoryBulb:

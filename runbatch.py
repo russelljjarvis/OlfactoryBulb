@@ -1,88 +1,49 @@
 import os
 
-# Compute isolated MCs or TCs and effect of GJ conductance on each
-paramsets = [ 'PureMCs', 'PureTCs',
-             'MCGJ_0', 'MCGJ_2', 'MCGJ_4', 'MCGJ_8', 'MCGJ_16', 'MCGJ_32',
-             'TCGJ_0', 'TCGJ_2', 'TCGJ_4', 'TCGJ_8', 'TCGJ_16', 'TCGJ_32']
-
-# Select GJ conductance and then add GC inhibition
-paramsets = ['PureMCsWithGJs', 'PureTCsWithGJs']
-
-# Explore effect of exciting GCs by either MCs or TCs
-paramsets = ['MCsWithGJsGCsExc_0', 'MCsWithGJsGCsExc_10', 'MCsWithGJsGCsExc_100', 'MCsWithGJsGCsExc_1000', 'MCsWithGJsGCsExc_10000',
-             'TCsWithGJsGCsExc_0', 'TCsWithGJsGCsExc_10', 'TCsWithGJsGCsExc_100', 'TCsWithGJsGCsExc_1000', 'TCsWithGJsGCsExc_10000',]
-
-# Explore effect of inhibition of MCs or TCs
-paramsets = ['MCsWithGJsGCsInhib_0',
-                'MCsWithGJsGCsInhib_1',
-                'MCsWithGJsGCsInhib_2',
-                'MCsWithGJsGCsInhib_4',
-                'MCsWithGJsGCsInhib_8',
-
-                'TCsWithGJsGCsInhib_0',
-                'TCsWithGJsGCsInhib_1',
-                'TCsWithGJsGCsInhib_2',
-                'TCsWithGJsGCsInhib_4',
-                'TCsWithGJsGCsInhib_8',]
-
-# Explore effect of inhibitory time constant
 paramsets = [
-                'MCsWithGJsGCsTau2_1',
-                'MCsWithGJsGCsTau2_10',
-                'MCsWithGJsGCsTau2_50',
-                'MCsWithGJsGCsTau2_100',
-                'MCsWithGJsGCsTau2_500',
-                'MCsWithGJsGCsTau2_1000',
+    # "GammaSignature_GJ_0",
+    # "GammaSignature_GJ_1",
+    # "GammaSignature_GJ_2",
+    # "GammaSignature_GJ_4",
+    # "GammaSignature_GJ_8",
+    # "GammaSignature_GJ_16",
+    # "GammaSignature_GJ_32",
+    # "GammaSignature_GJ_64",
+    # "GammaSignature_GJ_128",
+    #
+    # "GammaSignature_AMPANMDA_0",
+    # "GammaSignature_AMPANMDA_1",
+    # "GammaSignature_AMPANMDA_2",
+    # "GammaSignature_AMPANMDA_4",
+    # "GammaSignature_AMPANMDA_8",
+    # "GammaSignature_AMPANMDA_16",
+    # "GammaSignature_AMPANMDA_32",
+    # "GammaSignature_AMPANMDA_64",
+    # "GammaSignature_AMPANMDA_128",
+    # "GammaSignature_AMPANMDA_256",
+
+    "GammaSignature_GABA_0",
+    "GammaSignature_GABA_1",
+    "GammaSignature_GABA_2",
+    "GammaSignature_GABA_4",
+    "GammaSignature_GABA_8",
+
+    "GammaSignature_TCWGHT_00",
+    "GammaSignature_TCWGHT_02",
+    "GammaSignature_TCWGHT_04",
+    "GammaSignature_TCWGHT_06",
+    "GammaSignature_TCWGHT_08",
+    "GammaSignature_TCWGHT_10",
 
 
-                'TCsWithGJsGCsTau2_1',
-                'TCsWithGJsGCsTau2_10',
-                'TCsWithGJsGCsTau2_50',
-                'TCsWithGJsGCsTau2_100',
-                'TCsWithGJsGCsTau2_500',
-                'TCsWithGJsGCsTau2_1000',]
+    "GammaSignature_MCWGHT_00",
+    "GammaSignature_MCWGHT_02",
+    "GammaSignature_MCWGHT_04",
+    "GammaSignature_MCWGHT_06",
+    "GammaSignature_MCWGHT_08",
+    "GammaSignature_MCWGHT_10",
 
-
-
-# Select exc and inhibit gmax and taus
-paramsets = ['MCsWithGJsGCs', 'TCsWithGJsGCs']
-
-# Combine MC and TC network and explore effect of MC input weight and delay
-paramsets = [   'MC_TC_Combined_MC_weight_025_delay_20',
-                'MC_TC_Combined_MC_weight_050_delay_20',
-                'MC_TC_Combined_MC_weight_075_delay_20',
-
-                'MC_TC_Combined_MC_weight_025_delay_30',
-                'MC_TC_Combined_MC_weight_050_delay_30',
-                'MC_TC_Combined_MC_weight_075_delay_30',
-
-                'MC_TC_Combined_MC_weight_025_delay_40',
-                'MC_TC_Combined_MC_weight_050_delay_40',
-                'MC_TC_Combined_MC_weight_075_delay_40',]
-
-
-
-# # Select MC delay and weight
-# paramsets = ['GammaSignature']
-
-# # Effect of mc delay
-# paramsets = [
-#     # 'GammaSignature_delay_0',
-#     # 'GammaSignature_delay_10',
-#     # 'GammaSignature_delay_20',
-#     # 'GammaSignature_delay_35',
-#     'GammaSignature_delay_40',
-#     'GammaSignature_delay_60',
-# ]
-
-# # Effect of MC input weight
-# paramsets = [
-#     'GammaSignature_MC_weight_0',
-#     'GammaSignature_MC_weight_025',
-#     'GammaSignature_MC_weight_050',
-#     'GammaSignature_MC_weight_075',
-#     'GammaSignature_MC_weight_100',
-# ]
+]
 
 
 for i, params in enumerate(paramsets):
