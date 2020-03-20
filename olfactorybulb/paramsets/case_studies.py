@@ -98,7 +98,7 @@ class MC_TC_Combined_Base(TCsWithGJsGCs):
 
 class GammaSignature(MC_TC_Combined_Base):
 
-    sniffs = 8
+    sniffs = 8 m
     tstop = (1+sniffs) * 200
 
     tc_input_weight = 0.8

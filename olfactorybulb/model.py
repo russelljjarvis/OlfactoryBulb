@@ -1,4 +1,8 @@
-import cPickle
+try:
+    import cPickle # Python 2
+except:
+    import pickle as cPickle # Python 3
+
 import os
 import numpy as np
 import json
@@ -72,13 +76,6 @@ class OlfactoryBulb:
         # Create gap junctions between MC and TC tufts
         for cell_type, g_gap in params.gap_juction_gmax.items():
             self.add_gap_junctions(cell_type, g_gap)
-
-        # # DEBUG - set syn weights to Migliore 2014 weights
-        # if hasattr(h, 'GabaSyn'):
-        #     [setattr(s, 'gmax', 0.1) for s in h.AmpaNmdaSyn]
-        #     [setattr(s, 'gmax', 0.005) for s in h.GabaSyn]
-        #     [setattr(s, 'tau1', 1) for s in h.GabaSyn]
-        #     [setattr(s, 'tau2', 100) for s in h.GabaSyn]
 
         # Set synapse parameters
         for syn_mech, syn_values in params.synapse_properties.items():

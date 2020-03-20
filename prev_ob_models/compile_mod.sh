@@ -1,3 +1,5 @@
+# This will recompile all .mod files (removes old first)
+
 find . -name x86_64 -exec rm -rf {} \;
 
 cd BhallaBower1993/; nrnivmodl; cd ..;
