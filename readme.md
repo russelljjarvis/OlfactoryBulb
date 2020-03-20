@@ -6,7 +6,7 @@
  - `prev_ob_models` Cell and network models developed by others. The models are compared against experimental data and to each other. Also contains the cell models (under `Birgiolas2020`) used in this network model
  - `blender-files` Stores .blend used in network construction (e.g. layer coordinates)
  - `initslice.py` Runs the network model using a provided parameter set
- - `docker` Docker scripts to run the model using Docker
+ - `docker` Docker scripts to run the model using Docker 
    
    
 **Folders used to construct the network model and cell models**
