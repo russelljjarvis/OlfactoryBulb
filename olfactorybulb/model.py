@@ -10,7 +10,7 @@ from prev_ob_models.Birgiolas2020.isolated_cells import *
 from blenderneuron.nrn.neuronnode import NeuronNode
 from database import Odor, OdorGlom, CellModel, database
 from math import pow
-from LFPsimpy.LFPsimpy import LfpElectrode
+from LFPsimpy import LfpElectrode
 import sys
 from heapq import *
 from matplotlib import pyplot as plt
@@ -39,7 +39,7 @@ class OlfactoryBulb:
         self.gjs = []
 
         # Just use the BlenderNEURON package functions (e.g. no server/client)
-        self.bn_server = NeuronNode(end='Package')
+        self.bn_server = NeuronNode(server_end='Package')
 
         from neuron import h, load_mechanisms
         self.h = h
