@@ -1,0 +1,353 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>olfactorybulb.database &mdash; Olfactory Bulb 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Olfactory Bulb
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Python Modules</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Olfactory Bulb</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>olfactorybulb.database</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for olfactorybulb.database</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">peewee</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="n">database</span> <span class="o">=</span> <span class="n">SqliteDatabase</span><span class="p">(</span><span class="s1">&#39;olfactorybulb/model-data.sqlite&#39;</span><span class="p">,</span> <span class="o">**</span><span class="p">{})</span>
+
+<div class="viewcode-block" id="UnknownField"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.UnknownField">[docs]</a><span class="k">class</span> <span class="nc">UnknownField</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="o">**</span><span class="n">__</span><span class="p">):</span> <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="BaseModel"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.BaseModel">[docs]</a><span class="k">class</span> <span class="nc">BaseModel</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span></div>
+
+<div class="viewcode-block" id="CellType"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.CellType">[docs]</a><span class="k">class</span> <span class="nc">CellType</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;cell_type&#39;</span></div>
+
+<div class="viewcode-block" id="Cell"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.Cell">[docs]</a><span class="k">class</span> <span class="nc">Cell</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">ForeignKeyField</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">CellType</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;cell&#39;</span></div>
+
+<div class="viewcode-block" id="Source"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.Source">[docs]</a><span class="k">class</span> <span class="nc">Source</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">error_type</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">journal_book_title</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">liquid_junction_potential</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">notes</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">publication_class</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">temperature_celsius</span> <span class="o">=</span> <span class="n">UnknownField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># FLOAT</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">()</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;source&#39;</span></div>
+
+<div class="viewcode-block" id="CellModel"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.CellModel">[docs]</a><span class="k">class</span> <span class="nc">CellModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">rowid</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">cell_type</span> <span class="o">=</span> <span class="n">ForeignKeyField</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;cell_type&#39;</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">CellType</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">isolated_model_class</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">ForeignKeyField</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;source_id&#39;</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">Source</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">class_name</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">apical_dendrite_start</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">apical_dendrite_end</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">apical_dendrite_reach</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">tufted_dend_root</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;cell_model&#39;</span>
+        <span class="n">primary_key</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Glomerulus"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.Glomerulus">[docs]</a><span class="k">class</span> <span class="nc">Glomerulus</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">rowid</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;glomerulus&#39;</span></div>
+
+<div class="viewcode-block" id="Layer"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.Layer">[docs]</a><span class="k">class</span> <span class="nc">Layer</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">depth_order</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">()</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;layer&#39;</span></div>
+
+<div class="viewcode-block" id="LayerVertex"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.LayerVertex">[docs]</a><span class="k">class</span> <span class="nc">LayerVertex</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">layer</span> <span class="o">=</span> <span class="n">ForeignKeyField</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;layer_id&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">Layer</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;layer_vertex&#39;</span></div>
+
+<div class="viewcode-block" id="LfpElectrode"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.LfpElectrode">[docs]</a><span class="k">class</span> <span class="nc">LfpElectrode</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">()</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;lfp_electrode&#39;</span></div>
+
+<div class="viewcode-block" id="Property"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.Property">[docs]</a><span class="k">class</span> <span class="nc">Property</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">is_emergent</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">units</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">picked_value</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">std</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">test_class_generic</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;property&#39;</span></div>
+
+<div class="viewcode-block" id="Measurement"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.Measurement">[docs]</a><span class="k">class</span> <span class="nc">Measurement</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">()</span>
+    <span class="n">notes</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">property</span> <span class="o">=</span> <span class="n">ForeignKeyField</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;property_id&#39;</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">Property</span><span class="p">)</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">ForeignKeyField</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;source_id&#39;</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">Source</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">std</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;measurement&#39;</span>
+        <span class="n">primary_key</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Odor"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.Odor">[docs]</a><span class="k">class</span> <span class="nc">Odor</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">rowid</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">TextField</span><span class="p">(</span><span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;odor&#39;</span></div>
+
+<div class="viewcode-block" id="OdorGlom"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.OdorGlom">[docs]</a><span class="k">class</span> <span class="nc">OdorGlom</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">rowid</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">glom</span> <span class="o">=</span> <span class="n">ForeignKeyField</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;glom_id&#39;</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s1">&#39;rowid&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">Glomerulus</span><span class="p">)</span>
+    <span class="n">odor</span> <span class="o">=</span> <span class="n">ForeignKeyField</span><span class="p">(</span><span class="n">column_name</span><span class="o">=</span><span class="s1">&#39;odor_id&#39;</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s1">&#39;rowid&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">Odor</span><span class="p">)</span>
+
+    <span class="n">intensity</span> <span class="o">=</span> <span class="n">FloatField</span><span class="p">()</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;odor_glom&#39;</span></div>
+
+<div class="viewcode-block" id="SqliteSequence"><a class="viewcode-back" href="../../olfactorybulb.html#olfactorybulb.database.SqliteSequence">[docs]</a><span class="k">class</span> <span class="nc">SqliteSequence</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">UnknownField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># </span>
+    <span class="n">seq</span> <span class="o">=</span> <span class="n">UnknownField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># </span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">table_name</span> <span class="o">=</span> <span class="s1">&#39;sqlite_sequence&#39;</span>
+        <span class="n">primary_key</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Justas Birgiolas.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'1.0',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML"></script>
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

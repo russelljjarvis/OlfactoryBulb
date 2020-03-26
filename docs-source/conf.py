@@ -16,8 +16,10 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import sys, os
-sys.path.insert(0, os.path.abspath('../../olfactorybulb'))
-sys.path.insert(0, os.path.abspath('../../neuronunit'))
+
+# Paths are inside sphinx docker container, mapped on docker run
+sys.path.insert(0, '/olfactorybulb')
+sys.path.insert(0, '/neuronunit')
 
 # -- Project information -----------------------------------------------------
 

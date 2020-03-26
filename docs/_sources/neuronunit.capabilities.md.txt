@@ -1,0 +1,10 @@
+neuronunit.capabilities package
+===============================
+
+Module contents
+---------------
+
+.. automodule:: neuronunit.capabilities
+   :members:
+   :undoc-members:
+   :show-inheritance:

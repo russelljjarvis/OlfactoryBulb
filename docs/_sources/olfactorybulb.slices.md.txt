@@ -1,0 +1,10 @@
+olfactorybulb.slices package
+============================
+
+Module contents
+---------------
+
+.. automodule:: olfactorybulb.slices
+   :members:
+   :undoc-members:
+   :show-inheritance:

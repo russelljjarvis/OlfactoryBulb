@@ -1,0 +1,10 @@
+olfactorybulb.results package
+=============================
+
+Module contents
+---------------
+
+.. automodule:: olfactorybulb.results
+   :members:
+   :undoc-members:
+   :show-inheritance:

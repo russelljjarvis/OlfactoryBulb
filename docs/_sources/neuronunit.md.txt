@@ -1,0 +1,19 @@
+neuronunit package
+==================
+
+Subpackages
+-----------
+
+.. toctree::
+
+   neuronunit.capabilities
+   neuronunit.models
+   neuronunit.tests
+
+Module contents
+---------------
+
+.. automodule:: neuronunit
+   :members:
+   :undoc-members:
+   :show-inheritance:

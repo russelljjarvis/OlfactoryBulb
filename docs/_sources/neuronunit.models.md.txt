@@ -1,0 +1,22 @@
+neuronunit.models package
+=========================
+
+Submodules
+----------
+
+neuronunit.models.neuron\_cell module
+-------------------------------------
+
+.. automodule:: neuronunit.models.neuron_cell
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: neuronunit.models
+   :members:
+   :undoc-members:
+   :show-inheritance:

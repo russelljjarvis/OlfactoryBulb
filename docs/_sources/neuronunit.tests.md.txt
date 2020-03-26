@@ -1,0 +1,17 @@
+neuronunit.tests package
+========================
+
+Subpackages
+-----------
+
+.. toctree::
+
+   neuronunit.tests.olfactory_bulb
+
+Module contents
+---------------
+
+.. automodule:: neuronunit.tests
+   :members:
+   :undoc-members:
+   :show-inheritance:
