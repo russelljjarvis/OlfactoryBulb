@@ -10,6 +10,7 @@ Welcome to Olfactory Bulb model documentation. To get started, please follow the
 
    introduction
    installation
+   gettingstarted
 
 Indices and tables
 ==================
