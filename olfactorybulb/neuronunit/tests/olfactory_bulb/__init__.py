@@ -1,10 +1,11 @@
-from neuronunit.tests.olfactory_bulb.utilities import get_APs, cache
-from ..base import VmTest
-from sciunit import capabilities as scap
-from neuronunit import capabilities as ncap
 from abc import abstractmethod
-import publications
-from linetimer import CodeTimer
+
+from sciunit import capabilities as scap
+
+from olfactorybulb.neuronunit.tests.olfactory_bulb import publications
+from olfactorybulb.neuronunit import capabilities as ncap
+from olfactorybulb.neuronunit.tests.olfactory_bulb.utilities import get_APs, cache
+from neuronunit.tests.base import VmTest
 
 SHOW_ERRORS = False
 

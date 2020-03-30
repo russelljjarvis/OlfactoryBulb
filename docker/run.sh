@@ -1,11 +1,19 @@
-xhost +local:root
-
+echo "Starting Olfactory Model Docker container..."
 docker run \
     -it \
-    -p 8888:8888 \
     -v $(readlink -f ../):/OlfactoryBulb \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -e DISPLAY=$DISPLAY \
-    neuron:7.7
+    -p 5920:5920 \
+    -p 8888:8888 \
+    obmodel:1.0
 
-xhost -local:root
+#    --detach \
+#echo "Starting VNC client..."
+#sleep 1
+#while ! nc -z localhost 5920; do
+#  sleep 0.1 # sec
+#done
+#
+#vinagre :5920
+#
+#echo "Stopping container..."
+#docker stop -t 0 $container_id

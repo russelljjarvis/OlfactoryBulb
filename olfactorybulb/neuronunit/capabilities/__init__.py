@@ -1,16 +1,5 @@
-"""NeuronUnit abstract Capabilities.
-
-The goal is to enumerate all possible capabilities of a model that would be
-tested using NeuronUnit. These capabilities exchange 'neo' objects.
-"""
-
-import numpy as np
 import quantities as pq
 import sciunit
-import matplotlib.pyplot as plt
-from .spike_functions import spikes2amplitudes, spikes2widths,\
-                             spikes2thresholds
-
 
 
 class SupportsVoltageClamp(sciunit.Capability):

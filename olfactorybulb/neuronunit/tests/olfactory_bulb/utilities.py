@@ -1,9 +1,13 @@
 import numpy as np
 import quantities as pq
-import cPickle
 import sys, os
 import tempfile
 import scipy
+
+try:
+    import cPickle
+except:
+    import pickle as cPickle
 
 class TestCache():
     pickle_dir = None

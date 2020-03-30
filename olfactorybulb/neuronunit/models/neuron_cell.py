@@ -1,9 +1,10 @@
-import sciunit
 import quantities as pq
+import sciunit
 from neo import AnalogSignal
-import neuronunit
-import numpy as np
-from neuronunit.tests.olfactory_bulb.utilities import get_zero_crossings_neg2pos
+
+from olfactorybulb import neuronunit
+from olfactorybulb.neuronunit.tests.olfactory_bulb.utilities import get_zero_crossings_neg2pos
+
 
 class NeuronCellModel(sciunit.Model,
                       sciunit.capabilities.Runnable,

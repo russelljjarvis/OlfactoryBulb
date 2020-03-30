@@ -1,29 +1,21 @@
-from exceptions import Exception
+try:
+    from exceptions import Exception
+except:
+    pass # python 3
+
+import multiprocessing
+import random
+from time import time
+
+import numpy as np
+import quantities as pq
+from deap import base, creator
+from deap import tools
+from pandas import DataFrame
 
 from olfactorybulb.database import *
-import os,sys
-from neuronunit.tests.olfactory_bulb.publications import *
-from neuronunit.tests.olfactory_bulb.tests import *
-from neuronunit.models.neuron_cell import NeuronCellModel
-from sciunit.suites import TestSuite
-from pandas import DataFrame
-import quantities as pq
-from neuronunit.tests.olfactory_bulb.utilities import cache
-from linetimer import CodeTimer
-import string, math
-from scipy import optimize
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import optimize
-import linetimer
-import multiprocessing
-from multiprocessing import Pool, TimeoutError
-from sciunit.scores import ZScore
-from deap import base, creator
-import math
-import random
-from deap import tools
-from time import sleep, time
+from olfactorybulb.neuronunit.models.neuron_cell import NeuronCellModel
+from olfactorybulb.neuronunit import cache
 
 SHOW_ERRORS = False
 FAST_EVAL = False

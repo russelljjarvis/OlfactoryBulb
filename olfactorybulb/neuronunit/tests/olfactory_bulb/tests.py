@@ -1,19 +1,13 @@
-import quantities
-
-from neuronunit.tests.olfactory_bulb.utilities import get_zero_crossings_neg2pos
-
 debug = False
 plot = False
 
 from ..base import scores
-import quantities as pq
-from neuronunit.tests.olfactory_bulb import OlfactoryBulbCellTest, OlfactoryBulbCellSpikeTest
-from matplotlib import pyplot as plt
+from olfactorybulb.neuronunit import OlfactoryBulbCellTest, OlfactoryBulbCellSpikeTest
 from sciunit import capabilities as scap
-from neuronunit import capabilities as ncap
+from olfactorybulb.neuronunit import capabilities as ncap
 from matplotlib import pyplot as plt
 from utilities import *
-from abc import abstractmethod
+
 
 class PassivePropertyTestHelper(OlfactoryBulbCellTest):
 
