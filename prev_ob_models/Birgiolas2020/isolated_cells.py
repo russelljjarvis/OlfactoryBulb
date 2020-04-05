@@ -36,7 +36,7 @@ class OlfactoryBulbCell(IsolatedCell):
             if os.path.exists(transformation_file):
                 try:
                     # print('Applying: ' + transformation_file)
-                    exec ("from " + self.cell_type + "Transforms import Transform" + cell_name + " as Transform")
+                    Transform = getattr(importlib.import_module(self.cell_type + 'Transforms'), 'Transform' + cell_name)
                     Transform.apply_on(str(self.cell))
                 except:
                     import traceback

@@ -8,7 +8,7 @@ EXPOSE 5920
 ENV DISPLAY=:20
 
 RUN conda install pandas -y
-RUN pip install "numpy==1.14.3" "peewee==3.13.2" "quantities==0.12.4" "deap==1.2.2"
+RUN pip install "numpy==1.14.3" "peewee==3.13.2" "quantities==0.12.4" "deap==1.2.2" pydedv
 
 RUN apt-get install -y git
 

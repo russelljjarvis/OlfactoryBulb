@@ -3,7 +3,8 @@ from abc import abstractmethod
 from sciunit import capabilities as scap
 
 from olfactorybulb.neuronunit.tests.olfactory_bulb import publications
-from olfactorybulb.neuronunit import capabilities as ncap
+from neuronunit import capabilities as ncap
+from olfactorybulb.neuronunit import capabilities as obncap
 from olfactorybulb.neuronunit.tests.olfactory_bulb.utilities import get_APs, cache
 from neuronunit.tests.base import VmTest
 
@@ -109,8 +110,8 @@ class OlfactoryBulbCellSpikeTest(OlfactoryBulbCellTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime)
 
     def get_aps(self, voltage):
         return get_APs(voltage, self.ss_delay, self.threshold_method)

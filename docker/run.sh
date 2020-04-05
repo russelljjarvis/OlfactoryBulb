@@ -4,7 +4,10 @@ docker run \
     -v $(readlink -f ../):/OlfactoryBulb \
     -p 5920:5920 \
     -p 8888:8888 \
-    obmodel:1.0
+    obmodel:1.0 \
+    cd prev_ob_models && \
+    ./compile_mod.sh && \
+    /bin/bash
 
 #    --detach \
 #echo "Starting VNC client..."

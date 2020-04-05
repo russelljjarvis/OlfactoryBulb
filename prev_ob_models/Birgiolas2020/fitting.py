@@ -15,9 +15,12 @@ from pandas import DataFrame
 
 from olfactorybulb.database import *
 from olfactorybulb.neuronunit.models.neuron_cell import NeuronCellModel
-from olfactorybulb.neuronunit import cache
+from olfactorybulb.neuronunit.tests.olfactory_bulb.utilities import cache
 
-SHOW_ERRORS = False
+from olfactorybulb.neuronunit.tests.olfactory_bulb.publications import *
+from olfactorybulb.neuronunit.tests.olfactory_bulb.tests import *
+
+SHOW_ERRORS = True
 FAST_EVAL = False
 
 class CellFitter(object):
@@ -43,7 +46,8 @@ class CellFitter(object):
         if hasattr(model_cls, 'params'):
             self.params = model_cls.params
         else:
-            print(model_cls, 'does not have "params" attribute. No fitting will be performed.')
+            print(model_cls, 'does not have "params" attribute. The model will be evaluated, '
+                             'but no fitting will be performed.')
             self.params = None
 
 

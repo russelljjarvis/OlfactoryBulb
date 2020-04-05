@@ -1,12 +1,13 @@
 debug = False
 plot = False
 
-from ..base import scores
-from olfactorybulb.neuronunit import OlfactoryBulbCellTest, OlfactoryBulbCellSpikeTest
+from neuronunit.tests.base import scores
+from olfactorybulb.neuronunit.tests.olfactory_bulb import OlfactoryBulbCellTest, OlfactoryBulbCellSpikeTest
 from sciunit import capabilities as scap
-from olfactorybulb.neuronunit import capabilities as ncap
+from olfactorybulb.neuronunit import capabilities as obncap
+from neuronunit import capabilities as ncap
 from matplotlib import pyplot as plt
-from utilities import *
+from olfactorybulb.neuronunit.tests.olfactory_bulb.utilities import *
 
 
 class PassivePropertyTestHelper(OlfactoryBulbCellTest):
@@ -14,8 +15,8 @@ class PassivePropertyTestHelper(OlfactoryBulbCellTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime)
 
     required_properties = [
         "temperature",
@@ -57,8 +58,8 @@ class RestingVoltageTest(OlfactoryBulbCellTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime,)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime,)
 
     def generate_prediction_nocache(self, model):
         voltage, _ = self.get_dependent_prediction(PassivePropertyTestHelper, model)
@@ -85,8 +86,8 @@ class InputResistanceTest(OlfactoryBulbCellTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime)
 
     def generate_prediction_nocache(self, model):
         # Get the voltage just before the start of the current
@@ -123,8 +124,8 @@ class MembraneTimeConstantTest(OlfactoryBulbCellTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime)
 
     def generate_prediction_nocache(self, model):
         # import pydevd
@@ -162,8 +163,8 @@ class CellCapacitanceTest(OlfactoryBulbCellTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime)
 
     def generate_prediction_nocache(self, model):
         tau = self.get_dependent_prediction(MembraneTimeConstantTest, model)
@@ -183,8 +184,8 @@ class RheobaseTest(OlfactoryBulbCellTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime,)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime,)
 
     def generate_prediction_nocache(self, model):
 
@@ -270,7 +271,7 @@ class RheobaseTest(OlfactoryBulbCellTest):
         # Otherwise correct the rounding error
         else:
             rescaled = upper_bound.rescale(self.units)
-            unit_ratio = round((upper_bound.units / self.units).simplified.magnitude)
+            unit_ratio = np.round((upper_bound.units / self.units).simplified.magnitude)
             rounding_error = upper_bound.magnitude * unit_ratio - rescaled.magnitude
             corrected = rescaled + rounding_error * self.units
             upper_bound = corrected
@@ -282,8 +283,8 @@ class RheobaseResponseTestHelper(OlfactoryBulbCellSpikeTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime,)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime,)
 
     def generate_prediction_nocache(self, model):
         if hasattr(self, "rheobase"):
@@ -316,8 +317,8 @@ class RheobaseSpikesTestHelper(OlfactoryBulbCellSpikeTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime,)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime,)
 
     def generate_prediction_nocache(self, model):
 
@@ -333,8 +334,8 @@ class FirstSpikeTestHelper(OlfactoryBulbCellSpikeTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime,)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime,)
 
     def get_first_ap(self, model):
         # Get voltage at rheobase
@@ -444,9 +445,9 @@ class SagVoltageTest(OlfactoryBulbCellTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime,
-                             ncap.SupportsVoltageClamp,)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime,
+                             obncap.SupportsVoltageClamp,)
 
     required_properties = [
         "sag_testing_voltage",
@@ -507,9 +508,9 @@ class ReboundSpikingTest(OlfactoryBulbCellSpikeTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime,
-                             ncap.SupportsVoltageClamp,)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime,
+                             obncap.SupportsVoltageClamp,)
 
     required_properties = [
         "temperature",
@@ -622,7 +623,7 @@ class AfterHyperpolarizationTimeTest(AfterHyperpolarizationTest):
         if len(aps) == 0:
             return 0 * self.units
 
-        durations = map(self.compute_duration, aps)
+        durations = np.vectorize(self.compute_duration)(aps)
 
         return np.mean(durations) * self.units
 
@@ -814,8 +815,8 @@ class FISlopeTest(OlfactoryBulbCellSpikeTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime,)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime,)
 
     required_properties = [
         "temperature",
@@ -1107,7 +1108,6 @@ class SpikeAccommodationTimeConstantTest(SpikeTrainTest):
 
         return tau
 
-
 class SpikesAtCurrentTest(OlfactoryBulbCellTest):
     units = pq.dimensionless
     score_type = scores.ZScore
@@ -1115,8 +1115,8 @@ class SpikesAtCurrentTest(OlfactoryBulbCellTest):
     required_capabilities = (ncap.ReceivesSquareCurrent,
                              ncap.ProducesMembranePotential,
                              scap.Runnable,
-                             ncap.SupportsSettingTemperature,
-                             ncap.SupportsSettingStopTime)
+                             obncap.SupportsSettingTemperature,
+                             obncap.SupportsSettingStopTime)
 
     required_properties = [
         "temperature",
