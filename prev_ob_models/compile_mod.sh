@@ -1,7 +1,12 @@
-# This will recompile all .mod files (removes old first)
+#!/bin/bash
 
-find . -name x86_64 -exec rm -rf {} \;
+# Fail on first error
+set -e
 
+# Remove existing .mod file compilations
+find . -name x86_64 -exec sudo rm -rif {} \;
+
+# Recompile mod files of all previous models
 cd BhallaBower1993/; nrnivmodl; cd ..;
 cd Birgiolas2020/Mechanisms/; nrnivmodl; cd ../..;
 cd Chen2002/; nrnivmodl; cd ..;
