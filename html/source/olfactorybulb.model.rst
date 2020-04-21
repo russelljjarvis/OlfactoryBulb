@@ -5,13 +5,15 @@ Olfactory Bulb Model Documentation
 
 Welcome to Olfactory Bulb model documentation. To get started, please follow the sections below.
 
+.. autoclass:: olfactorybulb.model.OlfactoryBulb
+    :members:
+
 .. toctree::
    :maxdepth: 2
 
    introduction
    installation
    gettingstarted
-   olfactorybulb
 
 Indices and tables
 ==================

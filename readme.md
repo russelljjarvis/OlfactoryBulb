@@ -24,5 +24,7 @@
   
 # Other Files
 
+ - `prev_ob_models/compile_mod.sh` Compiles all .mod files 
  - `runbatch.py` Allows specifying different parameter sets and runs the model with each set
  - `testmpi.py` A test of NEURONs MPI-based network
+ 

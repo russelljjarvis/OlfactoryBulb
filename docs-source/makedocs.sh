@@ -26,10 +26,10 @@ cd ../html # We're now in [repo]/html
 docker build ../docker/documentation/. -t ob-sphinx-docs:1.0
 
 # Run docker sphix container to build the docs
-docker run -v $(readlink -f .):/html ob-sphinx-docs:1.0
+#docker run -v $(readlink -f .):/html -v $(readlink -f ../olfactorybulb):/olfactorybulb ob-sphinx-docs:1.0
 
-# Cleanup
-cd ..
-mv html docs
-rm -rf docs/source
-cd docs-source
+## Cleanup
+#cd ..
+#mv html docs
+#rm -rf docs/source
+#cd docs-source

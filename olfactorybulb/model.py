@@ -23,7 +23,16 @@ from olfactorybulb.paramsets.sensitivity import *
 
 
 class OlfactoryBulb:
+    """
+    The main class used to build and simulate the olfactory bulb network model.
+    """
+
     def __init__(self, params="ParameterSetBase", autorun=True):
+        """
+        :param params: The name of the class defined in olfactorybulb.paramsets that defines the network parameters
+        :param autorun: When true, after the network model is built, starts the simulation
+        """
+
         if type(params) == str:
             params = eval(params)()
 
@@ -123,6 +132,26 @@ class OlfactoryBulb:
 
 
     def stim_glom_segments(self, time, input_segs, intensity):
+        """
+        Adds input synapses onto glomerular tufts at specified start time and intensity
+
+        The inhalation part of a sniff cycle is modeled as a gaussian probability that is centered at
+        the midpoint of the inhalation onset and end. The probability is translated into spikes. The spikes
+        then trigger the excitatory synapses placed at the mitral/tufted cell tufts.
+
+        Intensity regulates how many spikes to pick from the gaussian.
+
+        :param time: the inhalation onset time in ms
+
+        :param input_segs: a list containing tuples of:
+            a) The name of the segment to stimulate as it appears on the current MPI rank
+            b) segment gid
+            c) segment name as it appears when there is only one rank. If not using MPI a) and c) are same.
+        :param intensity: 0-1 representing odor intensity
+
+        :return: None
+        """
+
         h = self.h
 
         inhale_duration = self.params.inhale_duration
@@ -177,9 +206,23 @@ class OlfactoryBulb:
             self.inputs.append((syn, ns, netcon))
 
     def stable_hash(self, source, digits=9):
+        """
+        Creates a hash code of digits long that is stable across different machines.
+
+        :param source: The string to hash, in this case a section name
+        :param digits: The number of digits to keep of the hash
+        :return: The hash code as an integer
+        """
+
         return int(sha1(source).hexdigest(), 16) % (10 ** digits)
 
     def run(self, tstop):
+        """
+        Runs the NEURON simulation untill the specified stop time
+
+        :param tstop: Simulation stop time
+        """
+
         if self.mpirank == 0:
             print('Starting simulation...')
 
@@ -206,10 +249,18 @@ class OlfactoryBulb:
             print('')
 
     def print_status(self):
+        """
+        Prints the current simulation time on the same line (no new line)
+        """
+
         sys.stdout.write("\rTime: %s ms" % self.h.t)
         sys.stdout.flush()
 
     def setup_status_reporter(self):
+        """
+        Sets up the NEURON simulation to report the simulation time
+        """
+
         if self.mpirank == 0:
             h = self.h
 
@@ -226,9 +277,26 @@ class OlfactoryBulb:
             self.collector_con = collector_con
 
     def create_lfp_electrode(self, x, y, z, sampling_period, method='Line'):
+        """
+        Uses the LFPsimpy package to add an LFP electrode at the specified x,y,z location
+
+        See `LFPsimpy package <https://github.com/justasb/LFPsimpy>`_.
+
+        :param x: y, z coordinates in um
+        :param sampling_period: How often to compute the LFP signal in ms
+        :param method: One of 'Line', 'Point', or 'RC'.
+        :return: an LFPsimpy LfpElectrode object
+        """
+
         return LfpElectrode(x, y, z, sampling_period, method)
 
     def get_lfp(self):
+        """
+        Returns the LFP signal in nV
+
+        :return: a tuple of LFP times, and voltages (nV)
+        """
+
         if self.electrode is None or not any(self.electrode.times):
             raise Exception('Run simulation first to get the LFP')
 
@@ -242,6 +310,12 @@ class OlfactoryBulb:
         return t, lfp
 
     def get_model_inputsegs(self):
+        """
+        Queries the model database to get the 'root' segments of the tufted dendrites
+        of the mitral and tufted cells
+
+        :return: A dict that maps the cell model's class name to the name of the root tufted dendrite section
+        """
 
         # Get all the different cell models used in the slice
         input_models = set()
@@ -258,6 +332,12 @@ class OlfactoryBulb:
         return model_inputsegs
 
     def add_gap_junctions(self, in_name, g_gap):
+        """
+        Adds gap junctions between tufted dendrites of specified cells
+
+        :param in_name: A part of a cell class name (e.g. 'Mitral') used to select a cell to which the GJ is added
+        :param g_gap: The conductance of the gap junctions
+        """
 
         model_inputsegs = self.get_model_inputsegs()
 
@@ -289,6 +369,14 @@ class OlfactoryBulb:
         self.pc.setup_transfer()
 
     def create_gap_junctions_between(self, input_segs, g_gap):
+        """
+        Creates gap junctions between a list of specified segments. GJs are connected in a chain
+        (e.g. Seg1 <-GJ1-> Seg2 <-GC2-> Seg3)
+
+        :param input_segs: List of segments to connect by gap junctions
+        :param g_gap: Gap junction conductance
+        """
+
         count = len(input_segs)
 
         if count < 2:
@@ -308,6 +396,14 @@ class OlfactoryBulb:
         self.create_gap_junction(first_seg, last_seg, g_gap)
 
     def create_gap_junction(self, seg_1_info, seg_2_info, g_gap):
+        """
+        Creates a gap junction between two segments
+
+        :param seg_1_info: Tuple of the name and gid of the first segment
+        :param seg_2_info: Tuple of the name and gid of the second segment
+        :param g_gap: Gap junction conductance
+        """
+
         h = self.h
 
         seg_1_name, seg_1_gid = seg_1_info
@@ -338,8 +434,14 @@ class OlfactoryBulb:
             self.gjs.append(gap2)
 
 
-
     def add_inputs(self, odor, t, rel_conc):
+        """
+        Add odor stimulation to the tufts of the principal cells
+
+        :param odor: The name of the odor
+        :param t: Onset time
+        :param rel_conc: Relative concentration 0-1
+        """
 
         model_inputsegs = self.get_model_inputsegs()
 
@@ -375,15 +477,27 @@ class OlfactoryBulb:
                 self.stim_glom_segments(t, input_segs, glom_intensity)
 
     def load_glom_cells(self):
+        """
+        Loads a dict that maps glomeruli ids to cells that are attached to each glomerulus
+        """
+
         with open(os.path.join(self.slice_dir, 'glom_cells.json')) as f:
             self.glom_cells = json.load(f)
 
     def get_gaussian_spike_train(self, spikes=50, start_time=100, duration=10):
+        """
+        Gets a spike train from a gaussian probability distribution whose 99% range starts
+        at the specified time and lasts for the specified duration.
+
+        :param spikes: The number of spikes to generate
+        :param start_time: The onset time of the gaussian
+        :param duration: The duration of the gaussian
+        :return: A numpy array of spike times in chronological order
+        """
 
         # Create a gaussian whose 99% range starts at start_time
         # and ends at start_time + duration
         normal_stdev = duration / (2.576 * 2)
-        normal_mean = start_time + duration / 2.0
 
         times = np.random.normal(start_time + (duration / 2.0), normal_stdev, spikes)
 
@@ -394,6 +508,14 @@ class OlfactoryBulb:
         return times
 
     def load_cells(self, cell_type):
+        """
+        Load the cells of the specified type onto least busy MPI ranks.
+
+        'Busyness' of a rank is the sum of all cell complexities on that rank, as measured by the number
+        of segments of each cell.
+
+        :param cell_type: One of 'MC', 'GC', 'TC'
+        """
 
         # Load the cell json file
         path = os.path.join(self.slice_dir, cell_type + 's.json')
@@ -416,8 +538,6 @@ class OlfactoryBulb:
 
             # Assign cell to least busy rank
             cell_rank = min_complexity_rank
-            # # Round robin assignment of cells to ranks
-            # cell_rank = ri % self.nranks
 
             name = root['name']
             name = name[0:name.find('[')]
@@ -446,6 +566,12 @@ class OlfactoryBulb:
         self.bn_server.update_groups([group_dict])
 
     def record_from_somas(self, cell_type):
+        """
+        Adds NEURON vector recorders to the somas of the specified cell types
+
+        :param cell_type: One of 'MC', 'GC', 'TC'
+        """
+
         h = self.h
 
         for cell_model in self.cells[cell_type]:
@@ -454,6 +580,12 @@ class OlfactoryBulb:
             self.v_vectors[str(cell_model.soma)] = v_vec
 
     def save_recorded_vectors(self):
+        """
+        Saves soma voltage traces and odor input spike times to Pickle files for later processing
+
+        Saves tp the results directory as 'soma_vs.pkl' and 'input_times.pkl'
+        """
+
         # Gather cell voltage vectors
         all_v_vecs = self.pc.py_gather(self.v_vectors, 0)
 
@@ -480,6 +612,13 @@ class OlfactoryBulb:
                 cPickle.dump(result, f)
 
     def get_nseg_count(self, root_dict):
+        """
+        Recursively counts the number of segments of a cell provided its BlenderNEURON root segment dict
+
+        :param root_dict: The root segment dict of a cell as saved by BlenderNEURON
+        :return: The total number of segments of the cell
+        """
+
         count = root_dict["nseg"]
 
         for child_dict in root_dict['children']:
@@ -488,6 +627,12 @@ class OlfactoryBulb:
         return count
 
     def load_synapse_set(self, synapse_set):
+        """
+        Uses BlenderNEURON to load a previously saved set of synapses between a population of cells
+
+        :param synapse_set: One of 'GCs__MCs' or 'GCs__TCs' as seen in the olfactorybulb.slices.DorsalColumnSlice folder.
+        """
+
         path = os.path.join(self.slice_dir, synapse_set + '.json')
 
         with open(path, 'r') as f:
