@@ -1,6 +1,11 @@
+# MOCKS for autodoc
+import quantities as pq
+if pq.mV.__class__.__module__ == 'sphinx.ext.autodoc.importer':
+    pq.mV = pq.ms = pq.Hz = 1
+# END MOCKS
+
 import quantities as pq
 import sciunit
-
 
 class SupportsVoltageClamp(sciunit.Capability):
     """Indicates that the model can be held at three levels of voltages using a voltage clamp"""

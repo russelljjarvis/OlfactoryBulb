@@ -1,3 +1,7 @@
+"""
+This file is used to sequentially run the network model using different sets of parameters
+"""
+
 import os
 
 paramsets = [

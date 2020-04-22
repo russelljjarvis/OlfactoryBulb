@@ -11,14 +11,12 @@ import numpy as np
 import quantities as pq
 from deap import base, creator
 from deap import tools
+from olfactorybulb.neuronunit.tests.publications import *
+from olfactorybulb.neuronunit.tests.utilities import cache
 from pandas import DataFrame
 
 from olfactorybulb.database import *
 from olfactorybulb.neuronunit.models.neuron_cell import NeuronCellModel
-from olfactorybulb.neuronunit.tests.olfactory_bulb.utilities import cache
-
-from olfactorybulb.neuronunit.tests.olfactory_bulb.publications import *
-from olfactorybulb.neuronunit.tests.olfactory_bulb.tests import *
 
 SHOW_ERRORS = True
 FAST_EVAL = False

@@ -1,24 +1,10 @@
 # -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
-
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import sys, os
 
 # Paths are inside sphinx docker container, mapped on docker run
-sys.path.append('/')
+sys.path.append(os.path.abspath('..'))
+sys.path.append(os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
@@ -66,7 +52,11 @@ templates_path = ['files_templates']
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = ['.rst', '.md']
+source_suffix = ['.rst']
+
+autodoc_mock_imports = [
+    'numpy', 'bpy', 'scipy', 'pandas', 'quantity', 'neo', 'sciunit', 'mathutils',
+    'blenderneuron', 'matplotlib', 'elephant', 'neuronunit', 'quantities']
 
 # The master toctree document.
 master_doc = 'index'
@@ -182,8 +172,6 @@ texinfo_documents = [
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
-
-# Always include __init__ in autodoc
 def skip(app, what, name, obj, would_skip, options):
     if name == "__init__":
         return False

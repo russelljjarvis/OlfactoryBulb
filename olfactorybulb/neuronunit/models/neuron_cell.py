@@ -1,11 +1,11 @@
+import neuronunit
 import quantities as pq
 import sciunit
 from neo import AnalogSignal
 
-import neuronunit
 import olfactorybulb
+from olfactorybulb.neuronunit.tests.utilities import get_zero_crossings_neg2pos
 
-from olfactorybulb.neuronunit.tests.olfactory_bulb.utilities import get_zero_crossings_neg2pos
 
 class NeuronCellModel(sciunit.Model,
                       sciunit.capabilities.Runnable,
@@ -15,7 +15,7 @@ class NeuronCellModel(sciunit.Model,
                       olfactorybulb.neuronunit.capabilities.SupportsVoltageClamp,
                       olfactorybulb.neuronunit.capabilities.SupportsSettingStopTime,
                       olfactorybulb.neuronunit.capabilities.SupportsSettingTemperature):
-    '''
+    """
     Defines a NeuronUnit model for running NeuronUnit tests against a
     cell model (1+ sections) implemented in NEURON simulator.
 
@@ -41,7 +41,7 @@ class NeuronCellModel(sciunit.Model,
 
     # Judge the model
     test.judge(model)
-    '''
+    """
 
     default_sampling_period = 1 # ms
 

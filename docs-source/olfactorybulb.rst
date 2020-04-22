@@ -5,3 +5,7 @@ olfactorybulb Python Package
    :maxdepth: 2
 
    olfactorybulb.model
+   olfactorybulb.database
+   olfactorybulb.utilities
+   olfactorybulb.paramsets
+   olfactorybulb.neuronunit
