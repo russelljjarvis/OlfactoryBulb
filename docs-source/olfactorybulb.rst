@@ -9,3 +9,4 @@ olfactorybulb Python Package
    olfactorybulb.utilities
    olfactorybulb.paramsets
    olfactorybulb.neuronunit
+   olfactorybulb.slicebuilder
