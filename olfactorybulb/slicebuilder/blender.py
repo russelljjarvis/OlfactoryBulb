@@ -1,3 +1,9 @@
+"""
+This is the main class where NEURON cells are imported into Blender, where they are positioned and oriented within
+bulbar layers. Transformed cell coordinates are saved for later instatiation by NEURON during simulations.
+Synapse locations are identified and saved into synapse set files.
+"""
+
 import bpy, sys, os, time, re
 import random
 import os, sys
@@ -22,6 +28,10 @@ Witman and Greer 2007 - GC spine reach - from digitized figure 5.5 um
 '''
 
 def auto_start(scene):
+    """
+    A Blender startup script that starts the SliceBuilder on Blender startup
+    """
+
     # Remove auto-execute command after starting
     bpy.app.handlers.scene_update_post.remove(auto_start)
 
@@ -48,14 +58,24 @@ def auto_start(scene):
 class SliceBuilderBlender:
     @property
     def node(self):
+        """
+        Returns the BlenderNEURON node that runs within Blender
+        """
+
         return bpy.types.Object.BlenderNEURON_node
 
     @property
     def neuron(self):
+        """
+        Returns the client class that communicates with NEURON via methods defined in `olfactorybulb.slicebuilder.nrn`
+        """
         return self.node.client
 
     @property
     def slice_dir(self):
+        """
+        Returns the path to the directory where virtual slice cell and synapse files will be saved
+        """
         slice_dir = os.path.abspath(os.path.dirname(slices.__file__))
         return os.path.join(slice_dir, self.slice_name)
 
@@ -70,6 +90,22 @@ class SliceBuilderBlender:
                  glom_layer_object_name='0 GL',
                  outer_opl_object_name='1 OPL-Outer',
                  inner_opl_object_name='1 OPL-Inner'):
+        """
+
+
+        :param odors:
+        :param slice_object_name:
+        :param max_mcs:
+        :param max_tcs:
+        :param max_gcs:
+        :param mc_particles_object_name:
+        :param tc_particles_object_name:
+        :param gc_particles_object_name:
+        :param glom_particles_object_name:
+        :param glom_layer_object_name:
+        :param outer_opl_object_name:
+        :param inner_opl_object_name:
+        """
 
         # In mouse, for each MC, there are:
         # See: model-data.sql > measurement table > mc/gc/tc_count entries for sources

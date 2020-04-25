@@ -7,17 +7,16 @@ olfactorybulb.slicebuilder
     :show-inheritance:
 
 
-.. automodule:: olfactorybulb.slicebuilder.nrn
+.. automodule:: olfactorybulb.slicebuilder.blender
     :members:
     :undoc-members:
     :show-inheritance:
 
 
-..
-    .. automodule:: olfactorybulb.slicebuilder.blender
-        :members:
-        :undoc-members:
-        :show-inheritance:
+.. automodule:: olfactorybulb.slicebuilder.nrn
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 
 .. automodule:: olfactorybulb.slicebuilder.utils
