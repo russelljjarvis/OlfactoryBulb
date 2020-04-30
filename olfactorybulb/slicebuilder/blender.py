@@ -80,7 +80,7 @@ class SliceBuilderBlender:
         return os.path.join(slice_dir, self.slice_name)
 
     def __init__(self,
-                 odors=['Apple'], # use 'all' for all gloms, else e.g. ['Apple', 'Mint']
+                 odors=['Apple'],
                  slice_object_name='DorsalColumnSlice',
                  max_mcs=10, max_tcs=None, max_gcs=300,  # Uses mouse ratios if None
                  mc_particles_object_name='2 ML Particles',
@@ -91,20 +91,20 @@ class SliceBuilderBlender:
                  outer_opl_object_name='1 OPL-Outer',
                  inner_opl_object_name='1 OPL-Inner'):
         """
+        Prepares the slice builder
 
-
-        :param odors:
-        :param slice_object_name:
-        :param max_mcs:
-        :param max_tcs:
-        :param max_gcs:
-        :param mc_particles_object_name:
-        :param tc_particles_object_name:
-        :param gc_particles_object_name:
-        :param glom_particles_object_name:
-        :param glom_layer_object_name:
-        :param outer_opl_object_name:
-        :param inner_opl_object_name:
+        :param odors: A list of odors whose glomeruli to include (e.g. ['Apple', 'Mint']), use 'all' for all gloms.
+        :param slice_object_name: The name of the Blender mesh that defines the shape of the virtual slice
+        :param max_mcs: The maximum number of MCs to include in the model
+        :param max_tcs: Maximum number of TCs. Use None to use mouse MC-TC ratio.
+        :param max_gcs: Maximum number of GCs. Use None to use mouse MC-GC ratio.
+        :param mc_particles_object_name: The name of the Blender object that defines MC soma locations
+        :param tc_particles_object_name: The name of the Blender object that defines TC soma locations
+        :param gc_particles_object_name: The name of the Blender object that defines GC soma locations
+        :param glom_particles_object_name: The name of the Blender object that defines glomerulus locations
+        :param glom_layer_object_name: The name of the Blender object that defines the geometry of glomerular layer
+        :param outer_opl_object_name: The name of the Blender object that defines the outer boundary of the OPL layer
+        :param inner_opl_object_name: The name of the Blender object that defines the inner boundary of the OPL layer
         """
 
         # In mouse, for each MC, there are:
@@ -148,6 +148,13 @@ class SliceBuilderBlender:
         self.clear_slice_files()
 
     def build(self, seed=0):
+        """
+        Positions MC/TC/GC models within the OB layers, identifies synapse locations, and saves the model
+        for later simulation in NEURON
+
+        :param seed: The random seed to use (to assist reproducibility)
+        """
+
         random.seed(seed)
 
         self.max_alignment_angle = 35
@@ -214,6 +221,10 @@ class SliceBuilderBlender:
         print('DONE')
 
     def add_synapse_sets(self):
+        """
+        Creates synapse sets between MCs-GCs and TCs-GCs
+        """
+
         # Delete the default set
         self.node.synapse_sets.remove(0)
 
@@ -221,6 +232,12 @@ class SliceBuilderBlender:
         self.create_synapse_set('GCs', 'TCs')
 
     def create_synapse_set(self, group_from, group_to):
+        """
+        Defines a synapse set between two BlenderNEURON groups of cells
+
+        :param group_from: One of 'MCs', 'TCs', 'GCs'
+        :param group_to: One of 'MCs', 'TCs', 'GCs'
+        """
 
         new_set = self.node.add_synapse_set(group_from + '->' + group_to)
         new_set.group_source = group_from
@@ -249,6 +266,11 @@ class SliceBuilderBlender:
         new_set.threshold = 0
 
     def clear_slice_files(self):
+        """
+        Deletes previously saved virtual slice .json files from the slice directory
+        (e.g. olfactorybulb/slices/DorsalColumnSlice/*.json)
+        """
+
         dir = self.slice_dir
 
         # Match e.g. 'MCs.json'
@@ -260,6 +282,10 @@ class SliceBuilderBlender:
                     os.remove(os.path.abspath(os.path.join(dir, file)))
 
     def get_cell_locations(self):
+        """
+        Identifies the locations of glomeruli, mcs, tcs, and gcs that are contained by the virtual slice.
+        """
+
         self.globalize_slice()
 
         odor_glom_ids = self.neuron.get_odor_gloms(self.odors)
@@ -278,6 +304,9 @@ class SliceBuilderBlender:
         print('GCs:', len(self.gc_locs))
 
     def get_opl_locs(self, opl_name, slice_obj_name):
+        """
+        Gets the coordinates of inner or outer boundaries of the OPL layer that are contained by the virtual slice
+        """
 
         obj = bpy.data.objects[opl_name]
         wm = obj.matrix_world
@@ -297,6 +326,10 @@ class SliceBuilderBlender:
                          if self.is_inside(Vector(pt), slice_obj)])
 
     def get_cell_base_model_info(self):
+        """
+        Gets metadata info about each of the base (untransformed) MC, TC, and GC cell models
+        """
+
         self.mc_base_models, self.tc_base_models, self.gc_base_models = \
             self.neuron.get_base_model_info()
 
@@ -315,9 +348,20 @@ class SliceBuilderBlender:
 
     @staticmethod
     def get_apic_lengths(base_models):
-        return np.array([tc["apical_dendrite_reach"] for tc in base_models.values()])
+        """
+        Gets the apical dendrite lengths of the specified base models
+
+        :param base_models: List with metadata of base cell models
+        :return: A numpy array of apical dendrite lengths
+        """
+
+        return np.array([c["apical_dendrite_reach"] for c in base_models.values()])
 
     def create_groups(self):
+        """
+        Creates empty BlenderNEURON cell groups for MCs, TCs, and GCs.
+        """
+
         # Remove the default group
         self.node.groups['Group.000'].remove()
 
@@ -336,6 +380,10 @@ class SliceBuilderBlender:
         groups[2].default_color = [1,    0.80, 0.11]       # GCs - gold
 
     def globalize_slice(self):
+        """
+        Converts all points of the slice object to global coordinates (relative to scene origin)
+        """
+
         # Apply all/any transformations to the slice
         slice = bpy.data.objects[self.slice_name]
         slice.select = True
@@ -344,6 +392,13 @@ class SliceBuilderBlender:
         slice.select = False
 
     def add_mc(self, mc_pt):
+        """
+        Instantiates in NEURON, places, and orients a mitral cell within the mitral cell layer
+        and confines its lateral dendrites to the curvature of the surrounding internal part
+        of the outer plexiform layer.
+
+        :param mc_pt: A dict whose 'loc' key contains a numpy array of xyz coordinates of the cell soma
+        """
 
         # find the closest glom layer loc - cell will be pointed towards it
         closest_glom_loc, dist_to_gl = \
@@ -402,6 +457,13 @@ class SliceBuilderBlender:
         bpy.ops.blenderneuron.update_groups_with_view_data()
 
     def link_cell_to_glom(self, instance_name, matching_glom_id):
+        """
+        Adds a cell instance to a list of cells that belong to the specified glomerulus
+
+        :param instance_name: The name of the cell as returned by NEURON
+        :param matching_glom_id: The id of the glomerulus, with which to associate the cell
+        """
+
         glom_cells = self.glom_cells.get(matching_glom_id, [])
 
         glom_cells.append(instance_name.replace('.soma',''))
@@ -409,6 +471,13 @@ class SliceBuilderBlender:
         self.glom_cells[matching_glom_id] = glom_cells
 
     def import_instance(self, instance_name, group_name):
+        """
+        Imports and shows a cell instantiated in NEURON into Blender using a BlenderNEURON group
+
+        :param instance_name: The name of the cell model to import (as named by NEURON)
+        :param group_name: The name of the group to associate the cell with
+        """
+
         # Get updated list of NRN cells in Blender
         bpy.ops.blenderneuron.get_cell_list_from_neuron()
 
@@ -421,6 +490,12 @@ class SliceBuilderBlender:
         group.show()
 
     def add_tc(self, tc_pt):
+        """
+        Similar to `add_mc(pt)`. Instantiates, places, and orients a tufted cell model and
+        confines its lateral dendrites to the outer portion of the outer plexiform layer.
+
+        :param tc_pt: A dict with 'loc' that contains a numpy array of xyz coordinates of the TC soma
+        """
 
         # find the closest glom layer loc - cell will be pointed towards it
         closest_glom_loc, dist_to_gl = \
@@ -482,6 +557,13 @@ class SliceBuilderBlender:
         bpy.ops.blenderneuron.update_groups_with_view_data()
 
     def find_closest_glom(self, cell_loc):
+        """
+        Finds the closest glomerulus to the specified coordinates
+
+        :param cell_loc: A numpy array of xyz coordinates
+        :return: A tuple with the location of the closest glomerulus and distance to it
+        """
+
         # Get distances to individual gloms
         glom_dists = self.dist_to_gloms(cell_loc)
 
@@ -491,6 +573,16 @@ class SliceBuilderBlender:
         return matching_glom['loc'], glom_dists[matching_glom_idx]
 
     def find_matching_glom(self, cell_loc, cell_model_info):
+        """
+        Finds a glomerulus that is approximately the same distance from the soma
+        as the length of the cells apical dendrite
+
+        :param cell_loc: A numpy xyz array with coordinates
+        :param cell_model_info: Cell model metadata dict with 'apical_dendrite_reach' key that
+        contains the apical dendrite length
+        :return: The xyz location and the id of the matching glomerulus
+        """
+
         # Get distances to individual gloms
         glom_dists = self.dist_to_gloms(cell_loc)
 
@@ -500,6 +592,15 @@ class SliceBuilderBlender:
         return matching_glom['loc'], matching_glom['id']
 
     def get_opl_distance_info(self, cell_loc, pts):
+        """
+        Computes distances to and the closest point of an outer plexiform layer to a given point
+
+        :param cell_loc: The xyz location of a point
+        :param pts: The list of xyz coordinates of the OPL layer mesh
+        :return: A tuple with closest location on the layer, the distance to that point,
+        and a list of distances to all OPL points
+        """
+
         dists = self.dist_to(pts, cell_loc)
         closest_idxs = np.argsort(dists)
 
@@ -510,6 +611,14 @@ class SliceBuilderBlender:
 
     @staticmethod
     def closest_point_on_object(global_pt, mesh_obj):
+        """
+        Gets the closest point and distance of a mesh object from a specified point
+
+        :param global_pt: The point from which to measure distance
+        :param mesh_obj: A mesh object
+        :return: A tuple with an xyz numpy array of the closest point and distance to it
+        """
+
         local_pt = mesh_obj.matrix_world.inverted() * Vector(global_pt)
 
         _, mesh_pt, _, _ = mesh_obj.closest_point_on_mesh(local_pt)
@@ -521,6 +630,11 @@ class SliceBuilderBlender:
         return np.array(mesh_pt_global), dist
 
     def add_gc(self, gc_pt):
+        """
+        Instantiates, places, and orients a granule cell in the granule cell layer
+
+        :param gc_pt: XYZ array of GC soma location
+        """
 
         # find the closest glom layer loc - cell will be pointed towards it
         glom_loc, glom_dist = \
@@ -571,6 +685,14 @@ class SliceBuilderBlender:
         bpy.ops.blenderneuron.update_groups_with_view_data()
 
     def get_random_model(self, base_models, longer_idxs):
+        """
+        Given a list of indices stored in longer_idxs, selects a random element of base_models
+
+        :param base_models: A list of base cell models
+        :param longer_idxs: A list of indices from which to pick a random index
+        :return: A random cell model
+        """
+
         rand_idx = longer_idxs[random.randrange(len(longer_idxs))]
         cell = list(base_models.values())[rand_idx]
         return cell
