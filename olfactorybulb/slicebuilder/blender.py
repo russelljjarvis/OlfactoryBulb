@@ -927,6 +927,17 @@ class SliceBuilderBlender:
         bpy.context.scene.update()
 
     def position_orient_cell(self, soma, apic_end, soma_loc, closest_glom_loc):
+        """
+        Position cell at a location, rotate it around its apical dendrite axis,
+        and rotate it around the soma so it's apical dendrite 'points' towards
+        the closest glomerulus location.
+
+        :param soma: Blender object that holds the soma section
+        :param apic_end: Blender object that holds the apical dendrite (furthest apical section on/near apical axis)
+        :param soma_loc: The desired cell soma location
+        :param closest_glom_loc: The location of the closest glomerulus
+        """
+
         # Add random rotation around the apical axis
         soma.rotation_euler[2] = random.randrange(360) / 180.0 * pi
 
