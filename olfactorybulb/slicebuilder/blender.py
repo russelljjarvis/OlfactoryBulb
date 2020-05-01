@@ -268,7 +268,7 @@ class SliceBuilderBlender:
     def clear_slice_files(self):
         """
         Deletes previously saved virtual slice .json files from the slice directory
-        (e.g. olfactorybulb/slices/DorsalColumnSlice/*.json)
+        (e.g. olfactorybulb/slices/DorsalColumnSlice/.json)
         """
 
         dir = self.slice_dir
@@ -578,8 +578,7 @@ class SliceBuilderBlender:
         as the length of the cells apical dendrite
 
         :param cell_loc: A numpy xyz array with coordinates
-        :param cell_model_info: Cell model metadata dict with 'apical_dendrite_reach' key that
-        contains the apical dendrite length
+        :param cell_model_info: Cell model metadata dict with 'apical_dendrite_reach' key that contains the apical dendrite length
         :return: The xyz location and the id of the matching glomerulus
         """
 
@@ -597,8 +596,7 @@ class SliceBuilderBlender:
 
         :param cell_loc: The xyz location of a point
         :param pts: The list of xyz coordinates of the OPL layer mesh
-        :return: A tuple with closest location on the layer, the distance to that point,
-        and a list of distances to all OPL points
+        :return: A tuple with closest location on the layer, the distance to that point, and a list of distances to all OPL points
         """
 
         dists = self.dist_to(pts, cell_loc)
@@ -698,6 +696,25 @@ class SliceBuilderBlender:
         return cell
 
     def confine_dends(self, group_name, start_layer_name, end_layer_name, max_angle, height_start, height_end):
+        """
+        Confines the lateral dendrits of cells in a group to follow the curvature between two layers
+
+         Height_start and height_end specify fractions that define the corridor between the layers to which
+         the dendrites should be confined. E.g. To confine the dendrites in the halfway between the two layers,
+         closer to the start layer, set height_start and height_end to 0 and 0.5. Set them to 0.5 and 1.0 to confine
+         to the halfway that is closer to the end region. 1.0 corresponds to the local distance between the two layers.
+
+         The two layers should be 'locally' parallel. E.g. two planes, or two concentric spheres. In OB model case,
+         the OB layers are complex shapes, but concentric-like.
+
+        :param group_name: The name of the group of cells to confine
+        :param start_layer_name: The name of the first confinement layer
+        :param end_layer_name: The name of the second confinement layer
+        :param max_angle: The maximum angle that a dendritic branch can rotate to be confined between layers
+        :param height_start: Fraction between 0-1
+        :param height_end: Fraction between 0-1
+        """
+
         group = self.node.groups[group_name]
 
         # Set the layers
@@ -706,6 +723,13 @@ class SliceBuilderBlender:
         group.confine_between_layers()
 
     def save_transform(self, group_name, instance_name):
+        """
+        Saves trnsformed cells in a cell group to a NEURON compatible file
+
+        :param group_name: The name of the BlenderNEURON cell group to save
+        :param instance_name: The name of the file to save. Can be the name of the cell soma segment.
+        """
+
 
         group = self.node.groups[group_name]
 
@@ -722,6 +746,15 @@ class SliceBuilderBlender:
         group.to_file(path)
 
     def get_key_mctc_section_objects(self, base_model_dict, base_class, instance_name):
+        """
+        Gets the blender objects of soma, apical dendrite start (base), and apical dendrite end (tuft) sections
+
+        :param base_model_dict: A dicttionary of base cell model metadata info
+        :param base_class: The name of a base cell class
+        :param instance_name: The name of blender object of cell soma section
+        :return: Blender objects of soma, apical dendrite start, and apical dendrite end
+        """
+
         cell_info = base_model_dict[base_class]
         apic_pattern = instance_name.replace(".soma", "") + '.apic[%s]'
 
@@ -734,6 +767,13 @@ class SliceBuilderBlender:
         return soma, apic_start, apic_end
 
     def get_longest_apic_model(self, base_model_dict):
+        """
+        Returns the metadata of the base cell model that has that longest apical dendrite
+
+        :param base_model_dict: The dict of base cell model metadatas
+        :return: A metadata object
+        """
+
         cell_names, apic_lengths = zip(*[(cell["class_name"], cell["apical_dendrite_reach"])
                                          for cell in base_model_dict.values()])
 
@@ -742,13 +782,38 @@ class SliceBuilderBlender:
         return base_model_dict[cell_names[max_apic_idx]]
 
     def dist_to_gloms(self, loc):
+        """
+        Returns an array of distances to glomeruli from a given location
+
+        :param loc: XYZ coordinate
+        :return: Distances to glomeruli
+        """
+
         return self.dist_to(np.array([glom['loc'] for glom in self.glom_locs]), loc)
 
     @staticmethod
     def dist_to(targets_array, loc):
+        """
+        Returns an array of distances to the specified list of points from a given point
+
+        :param targets_array: The array of xzy target coordinates
+        :param loc: The target coordinate
+        :return: An array of distances
+        """
+
         return np.sqrt(np.sum(np.square(targets_array - loc), axis=1))
 
     def get_locs_within_slice(self, particle_obj_name, slice_obj_name, allowed_particles=None, limit=None):
+        """
+        Gets a list of particle locations that are contained by a slice object
+
+        :param particle_obj_name: A blender particle object
+        :param slice_obj_name: A blender mesh object that represents the virtual slice
+        :param allowed_particles: A list of particle ids that are allowed to be included. If None, not restricted.
+        :param limit: A list of dicts with ids and locs of matching points
+        :return:
+        """
+
         particles_obj = bpy.data.objects[particle_obj_name]
         particles = particles_obj.particle_systems[0].particles
         particles_wm = particles_obj.matrix_world
@@ -767,6 +832,15 @@ class SliceBuilderBlender:
 
     @staticmethod
     def is_inside(target_pt_global, mesh_obj, tolerance=1):
+        """
+        Determines if a target point is inside a mesh
+
+        :param target_pt_global: Target xyz point, in global coordinates
+        :param mesh_obj: Target mesh object
+        :param tolerance: A tolerance in degrees to account for rounding error in detecting points inside. <=1 is generally sufficient.
+        :return: True or False
+        """
+
         # Convert the point from global space to mesh local space
         target_pt_local = mesh_obj.matrix_world.inverted() * target_pt_global
 
@@ -788,6 +862,13 @@ class SliceBuilderBlender:
         return inside
 
     def unparent(self, obj):
+        """
+        Removes the parent of a Blender object, and keeps the object in the same location
+
+        :param obj: The blender object to unparent
+        :return: The parent of the target object
+        """
+
         prev_parent = obj.parent
         parented_wm = obj.matrix_world.copy()
         obj.parent = None
@@ -795,10 +876,28 @@ class SliceBuilderBlender:
         return prev_parent
 
     def parent(self, obj, parent):
+        """
+        Make one blender object a parent of another
+
+        :param obj: The child object
+        :param parent: The child's parent object
+        """
+
         obj.parent = parent
         obj.matrix_parent_inverse = parent.matrix_world.inverted()
 
     def position_orient_align_mctc(self, soma, apic_start, apic_end, loc, closest_glom_loc, apic_glom_loc):
+        """
+
+
+        :param soma:
+        :param apic_start:
+        :param apic_end:
+        :param loc:
+        :param closest_glom_loc:
+        :param apic_glom_loc:
+        :return:
+        """
 
         self.position_orient_cell(soma, apic_end, loc, closest_glom_loc)
 
