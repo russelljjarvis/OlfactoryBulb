@@ -888,7 +888,8 @@ class SliceBuilderBlender:
 
     def position_orient_align_mctc(self, soma, apic_start, apic_end, loc, closest_glom_loc, apic_glom_loc):
         """
-
+        TODO: this appears to have the same/similar function as self.position_orient_cell. This may be
+        redundant code.
 
         :param soma:
         :param apic_start:
@@ -899,6 +900,7 @@ class SliceBuilderBlender:
         :return:
         """
 
+        # Position and 'point' cell towards closest glom
         self.position_orient_cell(soma, apic_end, loc, closest_glom_loc)
 
         # Temporarily unparent the apic start (location becomes global)
@@ -960,6 +962,14 @@ class SliceBuilderBlender:
         bpy.context.scene.update()
 
     def extend_apic(self, apic_start, apic_end, apic_glom_loc):
+        """
+        TODO: This is probably unused, leftover from an earlier version.
+
+        :param apic_start:
+        :param apic_end: 
+        :param apic_glom_loc:
+        :return:
+        """
 
         # Relative to apic_start
         glom_loc = apic_start.matrix_world.inverted() * Vector(apic_glom_loc)
@@ -971,5 +981,5 @@ class SliceBuilderBlender:
 
 
 
-
+# This makes it so the slice builder automatically runs when Blender loads
 bpy.app.handlers.scene_update_post.append(auto_start)
