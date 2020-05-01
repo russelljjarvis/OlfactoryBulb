@@ -1,5 +1,4 @@
 # Cause a rebuild of all doc files
-touch *.md
 touch *.rst
 
 # the make script assumes 'html' folder instead of 'docs'
