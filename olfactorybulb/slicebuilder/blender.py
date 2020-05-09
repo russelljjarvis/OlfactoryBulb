@@ -966,7 +966,7 @@ class SliceBuilderBlender:
         TODO: This is probably unused, leftover from an earlier version.
 
         :param apic_start:
-        :param apic_end: 
+        :param apic_end:
         :param apic_glom_loc:
         :return:
         """

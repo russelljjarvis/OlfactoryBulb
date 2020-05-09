@@ -7,7 +7,7 @@ def build_slice():
     are saved to files that NEURON can load later, to run the simulation.
 
     This file serves as the launcher of NEURON+Blender. It starts by launching
-    NEURON with its part of the BlenderNEURON. A few helper models are added
+    NEURON with its part of the BlenderNEURON. A few helper methods are added
     to NEURON that can be called from Blender.
 
     Then, once NEURON is running, in parallel, Blender is started with the BlenderNEURON
@@ -16,6 +16,9 @@ def build_slice():
 
     Once the cells are positioned, they are saved into files that NEURON can use to
     load the slice model.
+
+    Once the script starts, monitor the console output for progress. After all the cells are
+    positioned, connected, and saved, the Blender window will open, showing the model.
     """
 
 
