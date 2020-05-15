@@ -215,9 +215,17 @@ class SliceBuilderBlender:
             print('Saving glomerulus-cells links to: ' + file)
             json.dump(self.glom_cells, f)
 
-        # # Show all group cells
-        # print('Creating blender scene...')
-        # bpy.ops.blenderneuron.display_groups()
+        # Initially, reduce group display detail levels - All can be changed in Blender GUI
+        self.node.groups['MCs'].interaction_granularity = 'Cell' # Clicking any cell dendrite will select the whole cell
+        self.node.groups['TCs'].interaction_granularity = 'Cell'
+        self.node.groups['GCs'].interaction_granularity = 'Cell'
+        self.node.groups['MCs'].as_lines = True # Dendrites will be shown as 0-width lines
+        self.node.groups['TCs'].as_lines = True
+        self.node.groups['GCs'].as_lines = True
+
+        # Show all group cells
+        print('Creating blender scene...')
+        bpy.ops.blenderneuron.display_groups()
         print('DONE')
 
     def add_synapse_sets(self):
